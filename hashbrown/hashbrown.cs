@@ -24,12 +24,12 @@ namespace hashbrown
         }
 
         [Benchmark]
-        public ulong LiteHash_Small() => Program.LiteHash64(smallInput);
+        public ulong LiteHash_Small() => Program.MicroHash64(smallInput);
 
         [Benchmark]
-        public ulong LiteHash_Medium() => Program.LiteHash64(mediumInput);
+        public ulong LiteHash_Medium() => Program.MicroHash64(mediumInput);
 
         [Benchmark]
-        public ulong LiteHash_Large() => Program.LiteHash64(largeInput);
+        public ulong LiteHash_Large() => Program.MicroHash64(largeInput);
     }
 }
