@@ -6,12 +6,41 @@ namespace hashbrown
 {
     class Program
     {
+        public static string[] testInputs = new string[]
+        {
+            "Hello, World!",
+            "The quick brown fox jumps over the lazy dog",
+            "",
+            "a",
+            "abc",
+            "        ",
+            "abcdefghijklmnopqrstuvwxyz",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+            "0000000000000000000000000000000000000000000000000000000000000000",
+            "1111111111111111111111111111111111111111111111111111111111111111",
+            "123456789012345678901234567890",
+            "0101010101010101010101010101010101010101010101010101010101010101",
+            "0101011101010111010101010101011101010111000101010001110101010100"
+    };
+
         static void Main(string[] args)
         {
             bool benchmark = false;
+            bool tests = true;
             if (benchmark)
             {
                 BenchmarkRunner.Run<HashBenchmarks>();
+            }
+            else if (tests)
+            {
+
+
+                foreach (var input in testInputs)
+                {
+                    byte[] data = Encoding.UTF8.GetBytes(input);
+                    ulong hash = MicroHash64(data);
+                    Console.WriteLine($"MicroHash64(\"{input}\")\t= 0x{hash:X16}");
+                }
             }
             else
             {

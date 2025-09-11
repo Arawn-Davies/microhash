@@ -31,5 +31,16 @@ namespace hashbrown
 
         [Benchmark]
         public ulong LiteHash_Large() => Program.MicroHash64(largeInput);
+
+        [Benchmark]
+        public void LiteHash_TestVectors()
+        {
+            foreach (var input in Program.testInputs)
+            {
+                byte[] data = Encoding.UTF8.GetBytes(input);
+                ulong hash = Program.MicroHash64(data);
+                Console.WriteLine($"MicroHash64(\"{input}\")\t= 0x{hash:X16}");
+            }
+        }
     }
 }
