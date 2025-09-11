@@ -32,8 +32,8 @@ namespace MicroHash
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            bool benchmark = false;
-            bool tests = true;
+            bool benchmark = true;
+            bool tests = false;
             if (benchmark)
             {
                 BenchmarkRunner.Run<HashBenchmarks>();

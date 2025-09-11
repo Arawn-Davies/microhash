@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "hashbrown": {
+    "MicroHash64": {
       "commandName": "Project"
     },
     "Container (Dockerfile)": {
