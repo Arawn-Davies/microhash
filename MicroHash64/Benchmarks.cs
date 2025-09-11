@@ -42,27 +42,27 @@ namespace MicroHash
         /// </summary>
         /// <returns>Hash for small input data, 'veni'.</returns>
         [Benchmark]
-        public ulong LiteHash_Small() => Microhash64.ComputeHash(smallInput);
+        public ulong MicroHash_Small() => Microhash64.ComputeHash(smallInput);
 
         /// <summary>
         /// Benchmark method for hashing medium input.
         /// </summary>
         /// <returns>Hash for randomized medium input</returns>
         [Benchmark]
-        public ulong LiteHash_Medium() => Microhash64.ComputeHash(mediumInput);
+        public ulong MicroHash_Medium() => Microhash64.ComputeHash(mediumInput);
 
         /// <summary>
         /// Benchmark method for hashing large input.
         /// </summary>
         /// <returns>Hash for randomized large input</returns>
         [Benchmark]
-        public ulong LiteHash_Large() => Microhash64.ComputeHash(largeInput);
+        public ulong MicroHash_Large() => Microhash64.ComputeHash(largeInput);
 
         /// <summary>
         /// Benchmark method to run through predefined test vectors.
         /// </summary>
         [Benchmark]
-        public void LiteHash_TestVectors()
+        public void MicroHash_TestVectors()
         {
             foreach (var input in Program.testInputs)
             {

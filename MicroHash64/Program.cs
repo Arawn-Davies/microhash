@@ -52,7 +52,7 @@ namespace MicroHash
                 string input = "";
                 if (args.Length != 1)
                 {
-                    Console.WriteLine("Usage: LiteHash \"your string here\"");
+                    Console.WriteLine("Usage: MicroHash \"your string here\"");
 
                 }
                 if (args.Length == 1)
