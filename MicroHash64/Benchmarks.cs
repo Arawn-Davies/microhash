@@ -71,5 +71,44 @@ namespace MicroHash
                 Console.WriteLine($"MicroHash64(\"{input}\")\t= 0x{hash:X16}");
             }
         }
+
+        public static void ColTest()
+        {
+            int numSamples = 1_000_000; // 1 million random samples
+            var hashes = new HashSet<ulong>();
+            var rng = new Random(42);
+            int collisions = 0;
+
+            for (int i = 0; i < numSamples; i++)
+            {
+                // Generate random string of length 8
+                string input = RandomString(rng, 64);
+                byte[] data = Encoding.UTF8.GetBytes(input);
+
+                ulong h = Microhash64.ComputeHash(data); // your hash function
+                Console.WriteLine($"Input: {input}, Hash: 0x{h:X16}");
+                if (!hashes.Add(h))
+                {
+                    collisions++;
+                }
+            }
+
+            Console.WriteLine($"Samples: {numSamples}");
+            Console.WriteLine($"Collisions: {collisions}");
+            Console.WriteLine($"Collision rate: {(double)collisions / numSamples:P}");
+        }
+
+        static string RandomString(Random rng, int length)
+        {
+            const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++)
+            {
+                sb.Append(chars[rng.Next(chars.Length)]);
+            }
+            return sb.ToString();
+        }
+
+        // Paste your MicroHash64() implementation here
     }
 }

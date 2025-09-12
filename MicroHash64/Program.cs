@@ -32,11 +32,16 @@ namespace MicroHash
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            bool benchmark = true;
+            bool benchmark = false;
             bool tests = false;
+            bool coltest = true;
             if (benchmark)
             {
                 BenchmarkRunner.Run<HashBenchmarks>();
+            }
+            else if (coltest)
+            {
+                HashBenchmarks.ColTest();
             }
             else if (tests)
             {
