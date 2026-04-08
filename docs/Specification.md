@@ -167,6 +167,70 @@ The algorithm translates directly to any language that provides unsigned 32-bit 
 
 ---
 
+## Reduced-Output and Efficiency Considerations for Constrained Platforms
+
+The full MicroHash64 output is 64 bits, but many embedded and retro applications do not need that much output. Equally, the cost of 32-bit arithmetic on 8-bit CPUs means it is worth considering how to minimise work while still producing a useful digest. Nothing in the algorithm forbids using a narrower slice of the output, and a few structural choices can reduce the per-byte cycle cost considerably.
+
+### Truncated output widths
+
+The finalisation step produces a 64-bit value whose halves have different mixing properties:
+
+| Variant | How to obtain it | Notes |
+|---------|-----------------|-------|
+| 64-bit (full) | `(final << 32) \| state[1]` | Both halves mixed; maximum collision resistance |
+| 32-bit | Use `state[1]` alone, or `final` alone | `state[1]` is the most-mixed accumulator; `final` adds `state[0]` contribution. Either is a valid 32-bit digest |
+| 16-bit | Upper or lower 16 bits of `state[1]` | Sufficient for small hash tables on 8-bit systems (e.g. 256- or 512-entry tables) |
+| 8-bit | Low byte of `state[1]` | Useful only for tiny lookup structures; collision probability is high for inputs beyond a few dozen |
+
+Truncation is free — it requires no extra computation and produces a deterministic sub-digest fully derived from the same mixing steps. The internal state remains 2 × 32-bit throughout; narrowing the output only affects what is read from the state at the end.
+
+### Reducing memory pressure: eliminating the block buffer
+
+The reference implementation copies each input block into a 32-byte stack buffer before processing. On severely RAM-constrained systems (e.g. a 6502 with only zero-page available, or a microcontroller with a few hundred bytes of RAM total) this buffer can be eliminated by processing the input stream four bytes at a time directly:
+
+- Keep a 4-byte (one word) accumulation register and a byte counter.
+- As each byte arrives, store it in the accumulation register at the correct byte position.
+- When four bytes are collected (one word complete), apply the mixing step immediately and reset the accumulation register.
+- Track the total byte count for padding.
+- At the end of input, pad out the current partial word with the `0x80` marker and zero bytes, apply the mix, then flush any remaining words up to the 16-byte (four-word) boundary before finalising.
+
+This reduces the working RAM requirement to approximately 4 bytes (accumulation word) + 8 bytes (state) + 4 bytes (byte counter) = 16 bytes, at the cost of slightly more complex control flow.
+
+### Cycle cost on 8-bit platforms
+
+On 8-bit architectures such as the Z80 or 6502, each 32-bit rotate-left is the most expensive primitive in the inner loop. Approximate costs:
+
+| Operation | Z80 (cycles) | 6502 (cycles) |
+|-----------|-------------|---------------|
+| 32-bit XOR (4 bytes) | ~16 | ~16 |
+| 32-bit ADD with carry | ~24 | ~16 |
+| 32-bit rotate-left by 5 | ~60–80 | ~60–80 |
+| 32-bit rotate-left by 11 | ~60–80 | ~60–80 |
+| Full inner-loop iteration (one word) | ~200–240 | ~200–240 |
+| Per 16-byte block (4 words) | ~800–960 | ~800–960 |
+
+These are rough estimates; hand-optimised assembly using byte-rotation tricks (e.g. rotate-left by 8 is a free byte-lane rotate; rotate-left by 16 is two byte swaps) can cut these figures by 30–50 %.
+
+To reduce cycle cost further while keeping the same algorithm structure:
+
+- **Process only the first word per block** (4 bytes mixed per 32-byte block boundary). This is a significant loss in mixing quality but reduces inner-loop work by 4×.
+- **Use a smaller block size** — if the application controls the input framing, aligning on 4-byte boundaries and skipping the 32-byte padding entirely reduces overhead to the bare minimum of four mix iterations per 16 input bytes.
+- **Prefer the 32-bit output variant** — it saves the finalisation XOR-and-shift step, which on a 6502 involves a 32-bit rotate and 32-bit OR (another ~40–60 cycles).
+
+### Summary of trade-offs
+
+| Constraint | Recommended adaptation |
+|-----------|----------------------|
+| RAM < 32 bytes | Stream one word at a time; eliminate block buffer |
+| Output storage limited | Truncate to 32 or 16 bits post-finalisation |
+| Cycle budget tight (8-bit CPU) | Byte-rotation tricks for ROL-by-8/16; use 32-bit output (skip upper-half finalisation) |
+| Hash table ≤ 256 entries | 8-bit truncation is sufficient; only low byte of `state[1]` is needed |
+| Hash table ≤ 65536 entries | 16-bit truncation; upper 16 bits of `state[1]` tend to have better distribution |
+
+None of these adaptations require changing the core mixing logic — they are all post-processing choices or buffer-management strategies that any port can adopt independently.
+
+---
+
 ## Cross-Implementation Compatibility
 
 Both implementations produce identical output for the same byte sequence **on little-endian hosts**. The only observable difference is the word-loading path:
