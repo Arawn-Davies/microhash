@@ -254,6 +254,17 @@ docker run --rm -it microhash
 | Sensitivity — 8 distinct-input pairs | ✅ | ✅ |
 | All 256 single-byte values differ from empty | ✅ | ✅ |
 | Block-boundary lengths (31, 32, 33 bytes) | ✅ | ✅ |
-| **Total assertions** | **288** | **32** |
+| **Collision resistance** — 100K sequential inputs, 0 collisions | ✅ | ✅ |
+| **Avalanche effect** — avg bits changed per single-bit flip, 20–44/64 | ✅ | ✅ |
+| **Bit distribution** — each output bit 44%–56% frequency over 65K inputs | ✅ | ✅ |
+| **Total assertions** | **294** | **38** |
 
 > The C++ runner counts each `ASSERT_EQ`/`ASSERT_NE` call individually (including the 256-byte loop), while xUnit counts parameterised theory cases as separate test cases.
+
+### Notes on the statistical tests
+
+**Collision resistance** uses 100,000 sequential 8-byte inputs (integers 0–99,999 encoded as little-endian). The birthday paradox gives an expected collision count of N²/2^65 ≈ 0.27 for N=100,000, so zero is the correct result.
+
+**Avalanche effect** only tests inputs ≤ 16 bytes because microhash only reads the first 16 bytes (4 × 4-byte words) of each 32-byte block. Bytes 16–31 of any block are not mixed into the state — a known design limitation documented in Specification.md §3. For active-region bytes the average bit-flip count is ~31/64 (≈48%), close to the ideal 50%.
+
+**Bit distribution** hashes the 65,536 four-byte little-endian representations of 0–65,535. All 64 output bits land within 49.6%–50.3%, well within the 44%–56% test threshold.

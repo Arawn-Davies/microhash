@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -170,6 +171,118 @@ static void TestEdgeCases() {
 }
 
 // ---------------------------------------------------------------------------
+// Statistical / crypto-like quality tests
+// ---------------------------------------------------------------------------
+
+// Portable popcount for uint64_t.
+static int Popcount64(uint64_t v) {
+    int n = 0;
+    while (v) { n += (int)(v & 1u); v >>= 1; }
+    return n;
+}
+
+// Collision resistance: hash 100,000 distinct 8-byte little-endian integers and
+// assert zero collisions.  For a 64-bit hash, the birthday bound gives an expected
+// collision count of N² / 2^65 ≈ 0.27, so zero is the overwhelming expectation.
+static void TestCollisionResistance() {
+    printf("\n--- Collision Resistance ---\n");
+
+    const int N = 100000;
+    std::unordered_set<uint64_t> seen;
+    seen.reserve(N);
+    int collisions = 0;
+
+    for (int i = 0; i < N; ++i) {
+        uint8_t buf[8] = {};
+        uint32_t v = static_cast<uint32_t>(i);
+        buf[0] = v & 0xFFu;
+        buf[1] = (v >> 8) & 0xFFu;
+        buf[2] = (v >> 16) & 0xFFu;
+        buf[3] = (v >> 24) & 0xFFu;
+        uint64_t h = MicroHash::hashPipe::ComputeHash(buf, sizeof(buf));
+        if (!seen.insert(h).second) ++collisions;
+    }
+
+    char label[128];
+    snprintf(label, sizeof(label),
+             "no collisions in %d distinct inputs (found %d)", N, collisions);
+    ASSERT_EQ(collisions, 0, label);
+}
+
+// Avalanche effect: for inputs that fall entirely within the actively mixed first
+// 16 bytes of a block, flipping any single input bit should change ~50% (32/64) of
+// the output bits.  Threshold: 20–44 bits (31%–69%).
+//
+// Note: bytes 16–31 of any 32-byte block are not read by the mixing step (known
+// design limitation documented in Specification.md §3).  Only inputs short enough
+// that all their bytes land in the active region are tested here.
+static void TestAvalanche() {
+    printf("\n--- Avalanche Effect ---\n");
+
+    struct Case { const char* label; std::vector<uint8_t> data; };
+    std::vector<Case> cases = {
+        { "avalanche: 'a'    (1 byte)",    ToBytes("a")         },
+        { "avalanche: 'abc'  (3 bytes)",   ToBytes("abc")       },
+        { "avalanche: 'veni' (4 bytes)",   ToBytes("veni")      },
+        { "avalanche: 8 spaces (8 bytes)", ToBytes("        ")  },
+    };
+
+    for (auto& c : cases) {
+        auto data = c.data;
+        uint64_t orig = H(data);
+        long long total_bits = 0;
+        int num_flips = static_cast<int>(data.size() * 8);
+
+        for (size_t bi = 0; bi < data.size(); ++bi) {
+            for (int bit = 0; bit < 8; ++bit) {
+                data[bi] ^= static_cast<uint8_t>(1u << bit);
+                total_bits += Popcount64(orig ^ H(data));
+                data[bi] ^= static_cast<uint8_t>(1u << bit); // restore
+            }
+        }
+
+        double avg = static_cast<double>(total_bits) / num_flips;
+        bool ok = (avg >= 20.0 && avg <= 44.0);
+        char label[256];
+        snprintf(label, sizeof(label), "%s avg=%.2f bits changed (want 20–44)",
+                 c.label, avg);
+        if (ok) { printf("[PASS] %s\n", label); ++s_passed; }
+        else    { printf("[FAIL] %s\n", label); ++s_failed; }
+    }
+}
+
+// Bit distribution: across 65,536 sequential 4-byte inputs each of the 64 output
+// bit positions should be set 44%–56% of the time (roughly uniform).
+static void TestBitDistribution() {
+    printf("\n--- Bit Distribution ---\n");
+
+    const int N = 65536;
+    long long bit_counts[64] = {};
+
+    for (int i = 0; i < N; ++i) {
+        uint8_t buf[4];
+        buf[0] = static_cast<uint8_t>(i & 0xFF);
+        buf[1] = static_cast<uint8_t>((i >> 8) & 0xFF);
+        buf[2] = static_cast<uint8_t>((i >> 16) & 0xFF);
+        buf[3] = static_cast<uint8_t>((i >> 24) & 0xFF);
+        uint64_t h = MicroHash::hashPipe::ComputeHash(buf, sizeof(buf));
+        for (int b = 0; b < 64; ++b) bit_counts[b] += static_cast<int>((h >> b) & 1u);
+    }
+
+    int failures = 0;
+    for (int b = 0; b < 64; ++b) {
+        double freq = static_cast<double>(bit_counts[b]) / N;
+        if (freq < 0.44 || freq > 0.56) ++failures;
+    }
+
+    char label[256];
+    snprintf(label, sizeof(label),
+             "all 64 output bits within 44%%–56%% frequency over %d inputs (%d outside range)",
+             N, failures);
+    ASSERT_EQ(failures, 0, label);
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
@@ -181,6 +294,9 @@ int main() {
     TestDeterminism();
     TestSensitivity();
     TestEdgeCases();
+    TestCollisionResistance();
+    TestAvalanche();
+    TestBitDistribution();
 
     printf("\n================================\n");
     printf("Results: %d passed, %d failed\n", s_passed, s_failed);

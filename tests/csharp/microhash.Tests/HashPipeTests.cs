@@ -137,4 +137,109 @@ public class HashPipeTests
         byte[] b = Encoding.UTF8.GetBytes(new string('x', lenB));
         Assert.NotEqual(hashPipe.ComputeHash(a), hashPipe.ComputeHash(b));
     }
+
+    // -----------------------------------------------------------------------
+    // Statistical / crypto-like quality tests
+    // -----------------------------------------------------------------------
+
+    private static int PopCount64(ulong v)
+    {
+        int n = 0;
+        while (v != 0) { n += (int)(v & 1); v >>= 1; }
+        return n;
+    }
+
+    /// <summary>
+    /// Hash 100,000 distinct 8-byte little-endian integers and assert zero collisions.
+    /// For a 64-bit hash, the birthday bound gives E[collisions] ≈ N² / 2^65 ≈ 0.27,
+    /// so zero is the overwhelming statistical expectation.
+    /// </summary>
+    [Fact]
+    public void CollisionResistance_SequentialInputs_NoCollisions()
+    {
+        const int N = 100_000;
+        var seen = new HashSet<ulong>(N);
+        int collisions = 0;
+
+        for (int i = 0; i < N; i++)
+        {
+            byte[] buf = new byte[8];
+            buf[0] = (byte)(i & 0xFF);
+            buf[1] = (byte)((i >> 8) & 0xFF);
+            buf[2] = (byte)((i >> 16) & 0xFF);
+            buf[3] = (byte)((i >> 24) & 0xFF);
+            ulong h = hashPipe.ComputeHash(buf);
+            if (!seen.Add(h)) collisions++;
+        }
+
+        Assert.Equal(0, collisions);
+    }
+
+    /// <summary>
+    /// Flipping any single input bit should change ~50% (32/64) of the output bits.
+    /// Threshold: 20–44 bits (31%–69%).
+    ///
+    /// Only inputs whose bytes all fall within the actively mixed first 16 bytes of a
+    /// block are tested; bytes 16–31 per block are not read by the mixing step (known
+    /// design limitation, see Specification.md §3).
+    /// </summary>
+    [Theory]
+    [InlineData("a")]
+    [InlineData("abc")]
+    [InlineData("veni")]
+    [InlineData("        ")]
+    public void Avalanche_ShortInputs_HalfOfOutputBitsChange(string input)
+    {
+        byte[] data = Encoding.UTF8.GetBytes(input);
+        ulong orig = hashPipe.ComputeHash(data);
+        long totalBits = 0;
+        int numFlips = data.Length * 8;
+
+        for (int bi = 0; bi < data.Length; bi++)
+        {
+            for (int bit = 0; bit < 8; bit++)
+            {
+                data[bi] ^= (byte)(1 << bit);
+                ulong flipped = hashPipe.ComputeHash(data);
+                data[bi] ^= (byte)(1 << bit); // restore
+                totalBits += PopCount64(orig ^ flipped);
+            }
+        }
+
+        double avg = (double)totalBits / numFlips;
+        Assert.InRange(avg, 20.0, 44.0);
+    }
+
+    /// <summary>
+    /// Hash 65,536 sequential 4-byte integers; each of the 64 output bit positions
+    /// should be set 44%–56% of the time (roughly uniform distribution).
+    /// </summary>
+    [Fact]
+    public void BitDistribution_SequentialInputs_EachBitRoughlyFiftyPercent()
+    {
+        const int N = 65536;
+        long[] bitCounts = new long[64];
+
+        for (int i = 0; i < N; i++)
+        {
+            byte[] buf =
+            [
+                (byte)(i & 0xFF),
+                (byte)((i >> 8) & 0xFF),
+                (byte)((i >> 16) & 0xFF),
+                (byte)((i >> 24) & 0xFF),
+            ];
+            ulong h = hashPipe.ComputeHash(buf);
+            for (int b = 0; b < 64; b++) bitCounts[b] += (long)((h >> b) & 1);
+        }
+
+        int failures = 0;
+        for (int b = 0; b < 64; b++)
+        {
+            double freq = (double)bitCounts[b] / N;
+            if (freq < 0.44 || freq > 0.56) failures++;
+        }
+
+        Assert.Equal(0, failures);
+    }
 }
