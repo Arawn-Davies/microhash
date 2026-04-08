@@ -6,7 +6,7 @@
 
 namespace MicroHash {
 
-class Microhash64 {
+class hashPipe {
 public:
     static uint64_t ComputeHash(const uint8_t* data, size_t length) {
         // State initialization

@@ -1,4 +1,4 @@
-#include "microhash64.hpp"
+#include "microhash.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     if (argc == 2 && strcmp(argv[1], "--test") == 0) {
         for (size_t i = 0; i < testInputCount; ++i) {
             std::vector<uint8_t> data = ToBytes(testInputs[i]);
-            uint64_t h = MicroHash::Microhash64::ComputeHash(data);
+            uint64_t h = MicroHash::hashPipe::ComputeHash(data);
             printf("MicroHash64(\"%s\")\t= 0x%016llX\n",
                    testInputs[i], (unsigned long long)h);
         }
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<uint8_t> data = ToBytes(inputBuf);
-    uint64_t hash = MicroHash::Microhash64::ComputeHash(data);
+    uint64_t hash = MicroHash::hashPipe::ComputeHash(data);
     PrintHash(inputBuf, hash);
 
     return 0;
