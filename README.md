@@ -152,17 +152,17 @@ The header is intentionally written to be portable to any target with a C++ comp
 Run `./microhash --test` to verify output. Expected values:
 
 ```
-MicroHash64("Hello, World!")                                                     = 0x352256EFEDC72BD1
-MicroHash64("The quick brown fox jumps over the lazy dog")                       = 0x37876396F9CCB637
-MicroHash64("")                                                                  = 0xFD1FADBB7E12CB96
-MicroHash64("a")                                                                 = 0x9B1F9089AF49253E
-MicroHash64("abc")                                                               = 0x8874CA7BE18B8218
-MicroHash64("        ")                                                          = 0xB94BF2A5D5341A60
-MicroHash64("abcdefghijklmnopqrstuvwxyz")                                        = 0x67773BF7A225BE5D
-MicroHash64("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")   = 0xCE821AC98900EEA0
-MicroHash64("0000000000000000000000000000000000000000000000000000000000000000")  = 0x3411C1C38205A8E0
-MicroHash64("1111111111111111111111111111111111111111111111111111111111111111")  = 0x067FE50AF384C88E
-MicroHash64("123456789012345678901234567890")                                    = 0xBFD7E4924ACFA323
-MicroHash64("0101010101010101010101010101010101010101010101010101010101010101")  = 0x7BCC8A21375360E0
-MicroHash64("0101011101010111010101010101011101010111000101010001110101010100")  = 0xFDFB4707123CF187
+microhash("Hello, World!")                                                     = 0x352256EFEDC72BD1
+microhash("The quick brown fox jumps over the lazy dog")                       = 0x37876396F9CCB637
+microhash("")                                                                  = 0xFD1FADBB7E12CB96
+microhash("a")                                                                 = 0x9B1F9089AF49253E
+microhash("abc")                                                               = 0x8874CA7BE18B8218
+microhash("        ")                                                          = 0xB94BF2A5D5341A60
+microhash("abcdefghijklmnopqrstuvwxyz")                                        = 0x67773BF7A225BE5D
+microhash("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")   = 0xCE821AC98900EEA0
+microhash("0000000000000000000000000000000000000000000000000000000000000000")  = 0x3411C1C38205A8E0
+microhash("1111111111111111111111111111111111111111111111111111111111111111")  = 0x067FE50AF384C88E
+microhash("123456789012345678901234567890")                                    = 0xBFD7E4924ACFA323
+microhash("0101010101010101010101010101010101010101010101010101010101010101")  = 0x7BCC8A21375360E0
+microhash("0101011101010111010101010101011101010111000101010001110101010100")  = 0xFDFB4707123CF187
 ```

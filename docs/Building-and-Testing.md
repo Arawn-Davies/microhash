@@ -55,15 +55,15 @@ g++ -std=c++17 -O2 -DNDEBUG \
 Hash a string passed as an argument:
 ```sh
 ./microhash "Hello, World!"
-# MicroHash64("Hello, World!") = 0x352256EFEDC72BD1
+# microhash("Hello, World!") = 0x352256EFEDC72BD1
 ```
 
 Hash from standard input (interactive):
 ```sh
 ./microhash
-# Enter a string to hash using MicroHash64:
+# Enter a string to hash using microhash:
 # > abc
-# MicroHash64("abc") = 0x8874CA7BE18B8218
+# microhash("abc") = 0x8874CA7BE18B8218
 ```
 
 Print hashes for all built-in test vectors:
@@ -171,7 +171,7 @@ dotnet src/csharp/bin/Release/net9.0/microhash.dll "Hello, World!"
 Interactive mode (no arguments):
 ```sh
 dotnet run --project src/csharp/microhash.csproj
-# Enter a string to hash using MicroHash64:
+# Enter a string to hash using microhash:
 ```
 
 ### Debug build — test project
