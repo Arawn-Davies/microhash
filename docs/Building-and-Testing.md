@@ -55,7 +55,7 @@ g++ -std=c++17 -O2 -DNDEBUG \
 Hash a string passed as an argument:
 ```sh
 ./microhash "Hello, World!"
-# microhash("Hello, World!") = 0x352256EFEDC72BD1
+# MicroHash64("Hello, World!") = 0x352256EFEDC72BD1
 ```
 
 Hash from standard input (interactive):
@@ -63,7 +63,7 @@ Hash from standard input (interactive):
 ./microhash
 # Enter a string to hash using MicroHash64:
 # > abc
-# microhash("abc") = 0x8874CA7BE18B8218
+# MicroHash64("abc") = 0x8874CA7BE18B8218
 ```
 
 Print hashes for all built-in test vectors:
@@ -119,7 +119,7 @@ Expected output (abbreviated):
 ...
 
 ================================
-Results: 288 passed, 0 failed
+Results: 294 passed, 0 failed
 ```
 
 The process exits with code **0** on success and **1** if any test fails.
@@ -194,7 +194,7 @@ dotnet test microhash.sln
 
 Expected output:
 ```
-Passed!  - Failed: 0, Passed: 32, Skipped: 0, Total: 32, Duration: ~50ms
+Passed!  - Failed: 0, Passed: 38, Skipped: 0, Total: 38, Duration: ~50ms
 ```
 
 The process exits with code **0** on success and non-zero if any test fails.
