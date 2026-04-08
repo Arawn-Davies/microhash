@@ -1,10 +1,10 @@
 {
   "profiles": {
-    "MicroHash64": {
-      "commandName": "Project"
-    },
     "Container (Dockerfile)": {
       "commandName": "Docker"
+    },
+    "microhash": {
+      "commandName": "Project"
     }
   }
 }
