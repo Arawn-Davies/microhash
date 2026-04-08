@@ -1,0 +1,30 @@
+name: C# CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore microhash.sln
+
+      - name: Build
+        run: dotnet build microhash.sln --no-restore -c Release
+
+      - name: Test
+        run: dotnet test microhash.sln --no-build -c Release --verbosity normal
