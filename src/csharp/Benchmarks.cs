@@ -3,7 +3,7 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
-namespace MicroHash
+namespace microhash
 {
     public class HashBenchmarks
     {
@@ -42,21 +42,21 @@ namespace MicroHash
         /// </summary>
         /// <returns>Hash for small input data, 'veni'.</returns>
         [Benchmark]
-        public ulong MicroHash_Small() => Microhash64.ComputeHash(smallInput);
+        public ulong MicroHash_Small() => hashPipe.ComputeHash(smallInput);
 
         /// <summary>
         /// Benchmark method for hashing medium input.
         /// </summary>
         /// <returns>Hash for randomized medium input</returns>
         [Benchmark]
-        public ulong MicroHash_Medium() => Microhash64.ComputeHash(mediumInput);
+        public ulong MicroHash_Medium() => hashPipe.ComputeHash(mediumInput);
 
         /// <summary>
         /// Benchmark method for hashing large input.
         /// </summary>
         /// <returns>Hash for randomized large input</returns>
         [Benchmark]
-        public ulong MicroHash_Large() => Microhash64.ComputeHash(largeInput);
+        public ulong MicroHash_Large() => hashPipe.ComputeHash(largeInput);
 
         /// <summary>
         /// Benchmark method to run through predefined test vectors.
@@ -67,7 +67,7 @@ namespace MicroHash
             foreach (var input in Program.testInputs)
             {
                 byte[] data = Encoding.UTF8.GetBytes(input);
-                ulong hash = Microhash64.ComputeHash(data);
+                ulong hash = hashPipe.ComputeHash(data);
                 Console.WriteLine($"MicroHash64(\"{input}\")\t= 0x{hash:X16}");
             }
         }
@@ -85,7 +85,7 @@ namespace MicroHash
                 string input = RandomString(rng, 64);
                 byte[] data = Encoding.UTF8.GetBytes(input);
 
-                ulong h = Microhash64.ComputeHash(data); // your hash function
+                ulong h = hashPipe.ComputeHash(data); // your hash function
                 Console.WriteLine($"Input: {input}, Hash: 0x{h:X16}");
                 if (!hashes.Add(h))
                 {

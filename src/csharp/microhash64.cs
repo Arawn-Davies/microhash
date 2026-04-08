@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MicroHash
+namespace microhash
 {
-    internal class Microhash64
+    internal class hashPipe
     {
         public static ulong ComputeHash(byte[] data)
         {

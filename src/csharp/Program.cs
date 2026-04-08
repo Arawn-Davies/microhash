@@ -2,7 +2,7 @@
 using System.Text;
 using BenchmarkDotNet.Running;
 
-namespace MicroHash
+namespace microhash
 {
     class Program
     {
@@ -34,7 +34,7 @@ namespace MicroHash
         {
             bool benchmark = false;
             bool tests = false;
-            bool coltest = true;
+            bool coltest = false;
             if (benchmark)
             {
                 BenchmarkRunner.Run<HashBenchmarks>();
@@ -48,16 +48,16 @@ namespace MicroHash
                 foreach (var input in testInputs)
                 {
                     byte[] data = Encoding.UTF8.GetBytes(input);
-                    ulong hash = Microhash64.ComputeHash(data);
-                    Console.WriteLine($"MicroHash64(\"{input}\")\t= 0x{hash:X16}");
+                    ulong hash = hashPipe.ComputeHash(data);
+                    Console.WriteLine($"microhash(\"{input}\")\t= 0x{hash:X16}");
                 }
             }
             else
             {
-                string input = "";
+                string input = "Hello, World!"; // Default value if no input is given
                 if (args.Length != 1)
                 {
-                    Console.WriteLine("Usage: MicroHash \"your string here\"");
+                    Console.WriteLine("Usage: microhash \"your string here\"");
 
                 }
                 if (args.Length == 1)
@@ -86,11 +86,11 @@ namespace MicroHash
                 // Run 3 times
                 for (int i = 0; i < 3; i++)
                 {
-                    runonce = BitConverter.GetBytes(Microhash64.ComputeHash(runonce));
+                    runonce = BitConverter.GetBytes(hashPipe.ComputeHash(runonce));
                 }
-                ulong hash = Microhash64.ComputeHash(data);
+                ulong hash = hashPipe.ComputeHash(data);
 
-                Console.WriteLine($"MicroHash64(\"{input}\") = 0x{hash:X16}");
+                Console.WriteLine($"microhash(\"{input}\") = 0x{hash:X16}");
             }
         }
 
@@ -100,7 +100,7 @@ namespace MicroHash
         /// <param name="data"></param>
         public static void Hash(byte[] data)
         {
-            ulong hash = Microhash64.ComputeHash(data);
+            ulong hash = hashPipe.ComputeHash(data);
             Console.WriteLine(hash);
         }
     }
