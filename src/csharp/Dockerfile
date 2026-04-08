@@ -10,16 +10,16 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/csharp/microhash.csproj", "hashbrown/"]
-RUN dotnet restore "./src/csharp/microhash.csproj"
-COPY . .
-WORKDIR "/src/hashbrown"
-RUN dotnet build "./microhash.csproj" -c $BUILD_CONFIGURATION -o /app/build
+COPY ["src/csharp/microhash.csproj", "csharp/"]
+RUN dotnet restore "csharp/microhash.csproj"
+COPY src/csharp/ csharp/
+WORKDIR "/src/csharp"
+RUN dotnet build "microhash.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./microhash.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "microhash.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
