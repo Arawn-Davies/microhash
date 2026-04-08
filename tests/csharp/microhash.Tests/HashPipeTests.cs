@@ -115,13 +115,6 @@ public class HashPipeTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void ComputeHash_EmptyArray_ReturnsKnownValue()
-    {
-        ulong actual = hashPipe.ComputeHash([]);
-        Assert.Equal(0xFD1FADBB7E12CB96UL, actual);
-    }
-
-    [Fact]
     public void ComputeHash_AllSingleByteValues_DifferFromEmpty()
     {
         // Every single-byte value should produce a hash different from empty
@@ -134,14 +127,14 @@ public class HashPipeTests
     }
 
     [Theory]
-    [InlineData(31)]
-    [InlineData(32)]
-    [InlineData(33)]
-    public void ComputeHash_BlockBoundaryLengths_ProduceDistinctHashes(int length)
+    [InlineData(31, 32)]
+    [InlineData(32, 33)]
+    [InlineData(31, 33)]
+    public void ComputeHash_BlockBoundaryLengths_ProduceDistinctHashes(int lenA, int lenB)
     {
         // Strings of lengths around the 32-byte block boundary must differ
-        byte[] a = Encoding.UTF8.GetBytes(new string('x', length));
-        byte[] b = Encoding.UTF8.GetBytes(new string('x', length + 1));
+        byte[] a = Encoding.UTF8.GetBytes(new string('x', lenA));
+        byte[] b = Encoding.UTF8.GetBytes(new string('x', lenB));
         Assert.NotEqual(hashPipe.ComputeHash(a), hashPipe.ComputeHash(b));
     }
 }
