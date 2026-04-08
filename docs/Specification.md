@@ -107,7 +107,7 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 - Input is taken as a `byte[]`; callers convert strings via `Encoding.UTF8.GetBytes`, making the encoding explicit.
 - The hash logic itself (`microhash.cs`) has no dependencies beyond `System` and can be dropped into any C# project, including ones targeting .NET Framework 2.0 or later, without modification.
 - The benchmarking harness (`Benchmarks.cs`) depends on the BenchmarkDotNet package and a modern SDK build system. If cross-platform build tooling is unavailable (for example, when targeting .NET Framework on Windows without the .NET SDK), the benchmarks can be removed and the core logic compiled independently.
-- `Program.cs` exposes a CLI interface matching the C++ tool and additionally runs the hash three times in a feedback loop before displaying the final result for the default interactive mode.
+- `Program.cs` exposes a CLI interface matching the C++ tool. When a single argument is supplied, the string is hashed and the result is printed. With no arguments, the program reads a line from standard input, hashes it, and prints the result.
 
 ---
 

@@ -70,7 +70,7 @@ namespace microhash
                 }
                 if (args.Length == 0)
                 {
-                    Console.WriteLine("Enter a string to hash using MicroHash64:");
+                    Console.WriteLine("Enter a string to hash using microhash:");
                     input = Console.ReadLine() ?? "";
                     if (String.IsNullOrEmpty(input))
                     {

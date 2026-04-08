@@ -68,7 +68,7 @@ namespace microhash
             {
                 byte[] data = Encoding.UTF8.GetBytes(input);
                 ulong hash = hashPipe.ComputeHash(data);
-                Console.WriteLine($"MicroHash64(\"{input}\")\t= 0x{hash:X16}");
+                Console.WriteLine($"microhash(\"{input}\")\t= 0x{hash:X16}");
             }
         }
 
@@ -109,6 +109,6 @@ namespace microhash
             return sb.ToString();
         }
 
-        // Paste your MicroHash64() implementation here
+        // Paste your microhash() implementation here
     }
 }

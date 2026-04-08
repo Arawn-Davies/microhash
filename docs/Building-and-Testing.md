@@ -61,7 +61,7 @@ Hash a string passed as an argument:
 Hash from standard input (interactive):
 ```sh
 ./microhash
-# Enter a string to hash using MicroHash64:
+# Enter a string to hash using microhash:
 # > abc
 # microhash("abc") = 0x8874CA7BE18B8218
 ```
@@ -119,7 +119,7 @@ Expected output (abbreviated):
 ...
 
 ================================
-Results: 288 passed, 0 failed
+Results: 294 passed, 0 failed
 ```
 
 The process exits with code **0** on success and **1** if any test fails.
@@ -171,7 +171,7 @@ dotnet src/csharp/bin/Release/net9.0/microhash.dll "Hello, World!"
 Interactive mode (no arguments):
 ```sh
 dotnet run --project src/csharp/microhash.csproj
-# Enter a string to hash using MicroHash64:
+# Enter a string to hash using microhash:
 ```
 
 ### Debug build — test project
@@ -194,7 +194,7 @@ dotnet test microhash.sln
 
 Expected output:
 ```
-Passed!  - Failed: 0, Passed: 32, Skipped: 0, Total: 32, Duration: ~50ms
+Passed!  - Failed: 0, Passed: 38, Skipped: 0, Total: 38, Duration: ~50ms
 ```
 
 The process exits with code **0** on success and non-zero if any test fails.

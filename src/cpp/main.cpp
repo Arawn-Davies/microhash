@@ -16,7 +16,7 @@ static std::vector<uint8_t> ToBytes(const char* s) {
 }
 
 static void PrintHash(const char* input, uint64_t hash) {
-    printf("MicroHash64(\"%s\") = 0x%016llX\n", input,
+    printf("microhash(\"%s\") = 0x%016llX\n", input,
            (unsigned long long)hash);
 }
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
         for (size_t i = 0; i < testInputCount; ++i) {
             std::vector<uint8_t> data = ToBytes(testInputs[i]);
             uint64_t h = MicroHash::hashPipe::ComputeHash(data);
-            printf("MicroHash64(\"%s\")\t= 0x%016llX\n",
+            printf("microhash(\"%s\")\t= 0x%016llX\n",
                    testInputs[i], (unsigned long long)h);
         }
         return 0;
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     char inputBuf[4096] = {};
 
     if (argc == 1) {
-        printf("Enter a string to hash using MicroHash64:\n> ");
+        printf("Enter a string to hash using microhash:\n> ");
         if (!fgets(inputBuf, sizeof(inputBuf), stdin) || inputBuf[0] == '\0') {
             printf("No input provided. Exiting.\n");
             return 1;
