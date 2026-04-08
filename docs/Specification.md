@@ -1,8 +1,8 @@
-# MicroHash64 Specification
+# microhash Specification
 
 ## Overview
 
-MicroHash64 is a lightweight, non-cryptographic 64-bit hash function designed to run on a wide range of platforms — from modern desktops, servers, and mobile devices down to resource-constrained embedded systems and historically constrained 8/16-bit architectures. It prioritises simplicity, minimal memory footprint, and portability over cryptographic strength.
+**microhash** is a lightweight, non-cryptographic 64-bit hash function designed to run on a wide range of platforms — from modern desktops, servers, and mobile devices down to resource-constrained embedded systems and historically constrained 8/16-bit architectures. It prioritises simplicity, minimal memory footprint, and portability over cryptographic strength.
 
 The algorithm is intentionally straightforward so that it can be implemented in any language and compiled for any target without requiring hardware acceleration, operating-system support, or dynamic memory allocation.
 
@@ -83,7 +83,7 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 
 ## Implementations
 
-### C++ (`src/cpp/microhash64.hpp`)
+### C++ (`src/cpp/microhash.hpp`)
 
 **Target platforms:** Any platform with a C++ compiler that supports fixed-width integer types and basic bitwise arithmetic — modern desktop/server (x86-64, ARM64), embedded microcontrollers (ARM Cortex-M, AVR, RISC-V), and, via porting (see §Porting the C++ Implementation), classic and retro architectures such as the Z80, M68K, and 6502.
 
@@ -96,7 +96,7 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 - A convenience overload accepts `std::vector<uint8_t>` for use in hosted environments; the core pointer/length overload can be used without the STL entirely.
 - `main.cpp` provides a CLI tool that can hash strings supplied as command-line arguments, via stdin, or run a fixed set of test vectors with `--test`.
 
-### C# (`src/csharp/microhash64.cs`)
+### C# (`src/csharp/microhash.cs`)
 
 **Target platforms:** Any C# runtime — modern .NET, legacy .NET Framework, and Mono. This covers Windows, Linux, macOS, iOS, and Android. The core hash logic uses only fundamental C# language features (integer arithmetic, arrays, and bitwise operators) that have been stable since the earliest versions of the language and runtime.
 
@@ -105,7 +105,7 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 - Implemented as a static class (`hashPipe`) in a standard console project.
 - Word construction uses `BitConverter.ToUInt32`, which is correct on the little-endian architectures targeted by every common .NET runtime; on a big-endian host the result would differ from the C++ implementation.
 - Input is taken as a `byte[]`; callers convert strings via `Encoding.UTF8.GetBytes`, making the encoding explicit.
-- The hash logic itself (`hashPipe.cs`) has no dependencies beyond `System` and can be dropped into any C# project, including ones targeting .NET Framework 2.0 or later, without modification.
+- The hash logic itself (`microhash.cs`) has no dependencies beyond `System` and can be dropped into any C# project, including ones targeting .NET Framework 2.0 or later, without modification.
 - The benchmarking harness (`Benchmarks.cs`) depends on the BenchmarkDotNet package and a modern SDK build system. If cross-platform build tooling is unavailable (for example, when targeting .NET Framework on Windows without the .NET SDK), the benchmarks can be removed and the core logic compiled independently.
 - `Program.cs` exposes a CLI interface matching the C++ tool and additionally runs the hash three times in a feedback loop before displaying the final result for the default interactive mode.
 
@@ -113,7 +113,7 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 
 ## Porting the C++ Implementation
 
-Because the core algorithm uses only 32-bit integer arithmetic, bitwise XOR, addition, and bit-rotation, it can be translated to virtually any language or assembly dialect. The sections below describe what is required to port MicroHash64 to architectures that pre-date modern C++ compilers.
+Because the core algorithm uses only 32-bit integer arithmetic, bitwise XOR, addition, and bit-rotation, it can be translated to virtually any language or assembly dialect. The sections below describe what is required to port **microhash** to architectures that pre-date modern C++ compilers.
 
 ### General requirements for any port
 
@@ -136,7 +136,7 @@ The Z80 is an 8-bit processor. All 32-bit quantities must be maintained in pairs
 
 ### Motorola 68000 (M68K)
 
-The M68K is a 32-bit processor with eight data registers (`D0`–`D7`), making it a natural fit:
+The M680X0 is a 16/32-bit processor with eight data registers (`D0`–`D7`), making it a natural fit:
 
 - Each state word occupies a single data register; the rotate-left instructions (`ROL.L #5,Dn` and `ROL.L #11,Dn`) are single native instructions.
 - 32-bit XOR and ADD are single instructions (`EOR.L`, `ADD.L`).
@@ -169,7 +169,7 @@ The algorithm translates directly to any language that provides unsigned 32-bit 
 
 ## Reduced-Output and Efficiency Considerations for Constrained Platforms
 
-The full MicroHash64 output is 64 bits, but many embedded and retro applications do not need that much output. Equally, the cost of 32-bit arithmetic on 8-bit CPUs means it is worth considering how to minimise work while still producing a useful digest. Nothing in the algorithm forbids using a narrower slice of the output, and a few structural choices can reduce the per-byte cycle cost considerably.
+The full **microhash** output is 64 bits, but many embedded and retro applications do not need that much output. Equally, the cost of 32-bit arithmetic on 8-bit CPUs means it is worth considering how to minimise work while still producing a useful digest. Nothing in the algorithm forbids using a narrower slice of the output, and a few structural choices can reduce the per-byte cycle cost considerably.
 
 ### Truncated output widths
 
@@ -254,4 +254,4 @@ Both implementations produce identical output for the same byte sequence **on li
 | Speed | Single-pass; rotate-XOR-ADD mixing without multi-round expansion |
 | **Not** a goal | Cryptographic security — no resistance to preimage, collision, or length-extension attacks is claimed |
 
-MicroHash64 is suitable for hash tables, checksums, data fingerprinting, and similar non-security-sensitive applications where a fast, deterministic, platform-independent digest is required.
+**microhash** is suitable for hash tables, checksums, data fingerprinting, and similar non-security-sensitive applications where a fast, deterministic, platform-independent digest is required.
