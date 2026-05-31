@@ -6,7 +6,7 @@ url: https://arawn-davies.co.uk
 baseurl: /microhash
 
 aux_links:
-  "microhash on GitHub":
+  "View on GitHub":
     - "https://github.com/Arawn-Davies/microhash"
 
 search_enabled: true
@@ -14,8 +14,3 @@ heading_anchors: true
 color_scheme: dark
 enable_copy_code_button: true
 aux_links_new_tab: true
-
-footer_content: >-
-  microhash &middot; MIT License &middot; Built with Jekyll +
-  <a href="https://github.com/just-the-docs/just-the-docs">just-the-docs</a>.
-  <a href="https://arawn-davies.co.uk">Home: arawn-davies.co.uk</a>
