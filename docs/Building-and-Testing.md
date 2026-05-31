@@ -1,3 +1,9 @@
+---
+layout: default
+title: Building and Testing
+nav_order: 3
+---
+
 # Building and Testing microhash
 
 This document covers how to build each implementation from source (debug and release), run the CLI tools, execute the test suites, run the benchmarks, and use the Docker image.

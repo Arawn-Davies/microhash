@@ -1,0 +1,16 @@
+title: microhash
+description: A lightweight, portable, non-cryptographic 64-bit hash function.
+remote_theme: just-the-docs/just-the-docs
+
+url: https://arawn-davies.github.io
+baseurl: /microhash
+
+aux_links:
+  "microhash on GitHub":
+    - "https://github.com/Arawn-Davies/microhash"
+
+search_enabled: true
+heading_anchors: true
+
+plugins:
+  - jekyll-remote-theme

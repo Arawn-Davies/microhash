@@ -1,3 +1,9 @@
+---
+layout: default
+title: Specification
+nav_order: 2
+---
+
 # microhash Specification
 
 ## Overview
