@@ -1,16 +1,36 @@
 # frozen_string_literal: true
 
 # MicroHash — lightweight, non-cryptographic 64-bit hash.
-# Pure Ruby, no dependencies. Matches the C++/C# reference output.
+# Matches the C++/C# reference output.
+#
+# If the native extension (ext/microhash) has been compiled, hashing is
+# delegated to C for OpenSSL-digest-like speed; otherwise the pure-Ruby
+# implementation below is used. Both produce identical output.
 module MicroHash
   MASK32 = 0xFFFFFFFF
   BLOCK_SIZE = 32
+
+  NATIVE = begin
+    require_relative 'ext/microhash/microhash_ext'
+    true
+  rescue LoadError
+    false
+  end
 
   module_function
 
   # Accepts a String (hashed as raw bytes, encoding-agnostic) or an
   # Array of byte values. Returns the 64-bit digest as an Integer.
   def compute_hash(data)
+    if NATIVE
+      return native_compute_hash(data.is_a?(String) ? data : data.pack('C*'))
+    end
+
+    pure_compute_hash(data)
+  end
+
+  # Pure-Ruby reference path; used when the native extension is absent.
+  def pure_compute_hash(data)
     bytes = data.is_a?(String) ? data.bytes : data
     length = bytes.length
 

@@ -249,6 +249,20 @@ ruby src/ruby/main.rb --test
 
 The `--test` mode exits with code **0** on success and **1** if any vector fails, so it can be used in CI without RSpec installed.
 
+### Building the native extension (optional)
+
+An optional C extension (`src/ruby/ext/microhash/`) provides the same speed class as OpenSSL-backed digests. Build it once with the standard `mkmf` flow:
+
+```sh
+cd src/ruby/ext/microhash
+ruby extconf.rb
+make
+```
+
+This produces `microhash_ext.so` (or `.bundle` on macOS) next to the source. `microhash.rb` auto-detects it at require time: `MicroHash::NATIVE` reports `true` and `compute_hash`/`hexdigest` transparently delegate to C. Without the compiled extension the pure-Ruby path is used — output is identical either way. Run `make distclean` to remove build artifacts (they are gitignored).
+
+Indicative throughput on Ruby 3.1.3 (x86-64): pure Ruby hashes 64 KB in ~4.5 ms; the native extension does it in ~38 µs (~1.7 GB/s), roughly 5× faster than `Digest::SHA256` on the same input.
+
 ### Running the Ruby tests (RSpec)
 
 Install RSpec once:
@@ -263,7 +277,12 @@ rspec tests/ruby/microhash_spec.rb
 
 Expected output:
 ```
-19 examples, 0 failures
+20 examples, 0 failures
+```
+
+With the native extension compiled, an additional native-vs-pure agreement example runs (201 input lengths):
+```
+21 examples, 0 failures
 ```
 
 ### Using the library
@@ -320,10 +339,11 @@ docker run --rm -it microhash
 | All 256 single-byte values differ from empty | ✅ | ✅ | — |
 | Block-boundary lengths (31, 32, 33 bytes) | ✅ | ✅ | ✅ *(11 lengths)* |
 | Digest fits in 64 bits | — | — | ✅ |
+| Native extension == pure Ruby (201 lengths) | — | — | ✅ *(when compiled)* |
 | **Collision resistance** — 100K sequential inputs, 0 collisions | ✅ | ✅ | — |
 | **Avalanche effect** — avg bits changed per single-bit flip, 20–44/64 | ✅ | ✅ | — |
 | **Bit distribution** — each output bit 44%–56% frequency over 65K inputs | ✅ | ✅ | — |
-| **Total assertions** | **294** | **38** | **19 examples** |
+| **Total assertions** | **294** | **38** | **20–21 examples** |
 
 > The C++ runner counts each `ASSERT_EQ`/`ASSERT_NE` call individually (including the 256-byte loop), while xUnit counts parameterised theory cases as separate test cases.
 

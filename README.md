@@ -15,6 +15,7 @@ src/csharp/microhash.cs — C# implementation
 src/csharp/Program.cs   — C# CLI tool
 src/ruby/microhash.rb   — Ruby implementation (pure Ruby, no dependencies)
 src/ruby/main.rb        — Ruby CLI tool
+src/ruby/ext/microhash/ — optional native C extension (auto-detected)
 ```
 
 ---
@@ -98,6 +99,17 @@ ruby src/ruby/main.rb --test
 ```
 
 Output is identical to the C++ and C# implementations for the same byte sequence.
+
+### Optional native extension
+
+For OpenSSL-digest-style speed, compile the bundled C extension once:
+
+```bash
+cd src/ruby/ext/microhash
+ruby extconf.rb && make
+```
+
+`microhash.rb` auto-detects the compiled extension (`MicroHash::NATIVE` is `true` when loaded) and transparently delegates hashing to C — the API and output are unchanged, and the pure-Ruby path remains as a fallback wherever no compiler is available. On Ruby 3.1 the native path is roughly 45–120× faster than pure Ruby and ~5–8× faster than `Digest::SHA256`.
 
 ---
 

@@ -364,3 +364,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Ruby native extension build artifacts
+src/ruby/ext/microhash/Makefile
+src/ruby/ext/microhash/*.o
+src/ruby/ext/microhash/*.so
+src/ruby/ext/microhash/*.bundle
+src/ruby/ext/microhash/mkmf.log

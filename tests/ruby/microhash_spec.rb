@@ -59,6 +59,24 @@ RSpec.describe MicroHash do
     end
   end
 
+  describe '.pure_compute_hash' do
+    it 'matches compute_hash for every test vector (native or not)' do
+      TEST_VECTORS.each do |input, expected|
+        expect(described_class.pure_compute_hash(input)).to eq(expected)
+      end
+    end
+
+    if MicroHash::NATIVE
+      it 'agrees with the native extension across many lengths' do
+        (0..200).each do |len|
+          input = (0...len).map { |i| ((i * 7) + len) % 256 }.pack('C*')
+          expect(described_class.native_compute_hash(input))
+            .to eq(described_class.pure_compute_hash(input)), "length #{len}"
+        end
+      end
+    end
+  end
+
   describe '.hexdigest' do
     it 'returns a 16-character uppercase hex string' do
       expect(described_class.hexdigest('Hello, World!')).to eq('352256EFEDC72BD1')
