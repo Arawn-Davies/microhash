@@ -83,7 +83,7 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 | Minimum memory (core) | 32-byte block buffer + 8 bytes state |
 | Cryptographic | No |
 | Streaming | No (whole-message) |
-| Endianness dependency | Little-endian word assembly (both implementations) |
+| Endianness dependency | Little-endian word assembly (all implementations) |
 
 ---
 
@@ -114,6 +114,19 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 - The hash logic itself (`microhash.cs`) has no dependencies beyond `System` and can be dropped into any C# project, including ones targeting .NET Framework 2.0 or later, without modification.
 - The benchmarking harness (`Benchmarks.cs`) depends on the BenchmarkDotNet package and a modern SDK build system. If cross-platform build tooling is unavailable (for example, when targeting .NET Framework on Windows without the .NET SDK), the benchmarks can be removed and the core logic compiled independently.
 - `Program.cs` exposes a CLI interface matching the C++ tool. When a single argument is supplied, the string is hashed and the result is printed. With no arguments, the program reads a line from standard input, hashes it, and prints the result.
+
+### Ruby (`src/ruby/microhash.rb`)
+
+**Target platforms:** Any Ruby interpreter — CRuby/MRI 2.5+, JRuby, and TruffleRuby. The implementation uses only core language features (integer arithmetic, arrays, and bitwise operators), so it works unmodified inside Rails applications, plain scripts, and embedded mruby-style environments that provide `Integer` and `Array`.
+
+**Key characteristics:**
+
+- Single-file, pure-Ruby module (`MicroHash`) with no gem dependencies and no native extensions.
+- Ruby integers are arbitrary-precision, so 32-bit wrapping semantics are enforced explicitly by masking with `0xFFFFFFFF` after every addition, shift, and rotate — matching the fixed-width overflow behaviour of the C++ and C# implementations exactly.
+- Words are assembled manually from individual bytes using explicit bit-shifts, so output is identical on little-endian and big-endian hosts (like C++, unlike C#).
+- `MicroHash.compute_hash` accepts a `String` (hashed as raw bytes, independent of its declared encoding) or an `Array` of byte values, and returns the 64-bit digest as an `Integer`. `MicroHash.hexdigest` returns the digest as a 16-character uppercase hex string.
+- `main.rb` provides a CLI tool matching the C++ and C# tools, including the `--test` vector runner.
+- An RSpec suite (`tests/ruby/microhash_spec.rb`) verifies the golden test vectors and Ruby-specific behaviour (byte-array input, encoding-agnosticism, block-boundary lengths).
 
 ---
 
@@ -239,14 +252,14 @@ None of these adaptations require changing the core mixing logic — they are al
 
 ## Cross-Implementation Compatibility
 
-Both implementations produce identical output for the same byte sequence **on little-endian hosts**. The only observable difference is the word-loading path:
+All implementations produce identical output for the same byte sequence **on little-endian hosts**. The only observable difference is the word-loading path:
 
-| Aspect | C++ | C# |
-|--------|-----|----|
-| Word loading | Manual byte shifts | `BitConverter.ToUInt32` |
-| Length field type | `size_t` (≥32-bit) | `int` (32-bit signed) |
-| Input interface | `const uint8_t*` + length, or `std::vector<uint8_t>` | `byte[]` |
-| Endianness safe | Yes (explicit shifts) | Only on little-endian hosts |
+| Aspect | C++ | C# | Ruby |
+|--------|-----|----|------|
+| Word loading | Manual byte shifts | `BitConverter.ToUInt32` | Manual byte shifts |
+| Length field type | `size_t` (≥32-bit) | `int` (32-bit signed) | `Integer` (arbitrary precision) |
+| Input interface | `const uint8_t*` + length, or `std::vector<uint8_t>` | `byte[]` | `String` (raw bytes) or `Array` of bytes |
+| Endianness safe | Yes (explicit shifts) | Only on little-endian hosts | Yes (explicit shifts) |
 
 ---
 

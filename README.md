@@ -13,6 +13,8 @@ src/cpp/microhash.hpp   — header-only C++ implementation (include this)
 src/cpp/main.cpp        — C++ CLI tool
 src/csharp/microhash.cs — C# implementation
 src/csharp/Program.cs   — C# CLI tool
+src/ruby/microhash.rb   — Ruby implementation (pure Ruby, no dependencies)
+src/ruby/main.rb        — Ruby CLI tool
 ```
 
 ---
@@ -71,6 +73,31 @@ uint64_t hash = MicroHash::hashPipe::ComputeHash(bytes);
 ```
 
 The core `ComputeHash(const uint8_t*, size_t)` overload has zero heap allocation, no OS calls, and no STL dependencies beyond `<cstdint>` and `<cstddef>`. Safe to call from interrupt handlers and bare-metal environments.
+
+---
+
+## Using from Ruby
+
+`src/ruby/microhash.rb` is a single-file, pure-Ruby port with no gem dependencies (Ruby ≥ 2.5). Drop it into a Rails app (e.g. `lib/microhash.rb`) or require it directly:
+
+```ruby
+require_relative 'src/ruby/microhash'
+
+MicroHash.compute_hash('Hello, World!')   # => 0x352256EFEDC72BD1 (Integer)
+MicroHash.hexdigest('Hello, World!')      # => "352256EFEDC72BD1"
+
+# Strings are hashed as raw bytes (encoding-agnostic); byte arrays also work
+MicroHash.compute_hash([0x61, 0x62, 0x63]) == MicroHash.compute_hash('abc')  # => true
+```
+
+CLI (mirrors the C++/C# tools):
+
+```bash
+ruby src/ruby/main.rb "Hello, World!"
+ruby src/ruby/main.rb --test
+```
+
+Output is identical to the C++ and C# implementations for the same byte sequence.
 
 ---
 

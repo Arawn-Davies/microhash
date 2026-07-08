@@ -28,7 +28,7 @@ small, deterministic implementation matters more than cryptographic strength.
 | Processing block | 32 bytes, with the first 16 bytes actively mixed |
 | Core working memory | 32-byte block buffer and 8 bytes of state |
 | C++ API | Header-only, with no heap allocation in the core overload |
-| Implementations | C++17 and C# |
+| Implementations | C++17, C#, and Ruby |
 | Cryptographic | No |
 
 The C++ implementation is intentionally small. Its core overload uses fixed
@@ -72,8 +72,14 @@ For the C# implementation:
 dotnet run --project src/csharp/microhash.csproj -- "Hello, World!"
 ```
 
+For the Ruby implementation (no build step, no gem dependencies):
+
+```sh
+ruby src/ruby/main.rb "Hello, World!"
+```
+
 See [Building and Testing](Building-and-Testing.html) for debug and release
-builds, the C++ and C# test suites, benchmarks, and Docker usage.
+builds, the C++, C#, and Ruby test suites, benchmarks, and Docker usage.
 
 ## Algorithm summary
 
@@ -125,15 +131,15 @@ The specification includes implementation guidance for:
 - Only bytes `0` through `15` of each 32-byte block are mixed. Bytes `16`
   through `31`, including the encoded length field in the final block, do not
   currently influence the output.
-- The C++ implementation assembles words explicitly and is host-endian safe.
-  The C# implementation uses `BitConverter.ToUInt32`, so matching output is
-  expected on little-endian hosts.
+- The C++ and Ruby implementations assemble words explicitly and are
+  host-endian safe. The C# implementation uses `BitConverter.ToUInt32`, so
+  matching output is expected on little-endian hosts.
 
 ## Documentation
 
 - [Specification](Specification.html): algorithm, implementations, porting
   notes, constrained-target adaptations, and design trade-offs.
-- [Building and Testing](Building-and-Testing.html): C++, C#, Docker,
+- [Building and Testing](Building-and-Testing.html): C++, C#, Ruby, Docker,
   benchmarks, test coverage, and statistical checks.
 - [README](https://github.com/Arawn-Davies/microhash#readme): repository
   overview and test vectors.

@@ -18,6 +18,8 @@ All paths are relative to the **repository root** unless stated otherwise.
 |------|----------------|---------|
 | C++ compiler (GCC, Clang, MSVC) | C++17 | C++ implementation + tests |
 | .NET SDK | 9.0 | C# implementation, tests, benchmarks |
+| Ruby | 2.5+ (tested on 3.1.3) | Ruby implementation + CLI |
+| RSpec *(optional)* | 3.x | Ruby test suite (`gem install rspec`) |
 | Docker *(optional)* | 20.10+ | Container build / run |
 
 > **Note:** The C++ implementation (`src/cpp/microhash.hpp`) is a header-only library — no separate compilation step is needed to *use* it. The build steps below apply to the CLI tool (`main.cpp`) and the test suite (`tests/cpp/microhash_tests.cpp`).
@@ -222,6 +224,61 @@ Then edit `src/csharp/Program.cs` and set `bool benchmark = true;` before runnin
 
 ---
 
+## Ruby Implementation
+
+The Ruby implementation (`src/ruby/microhash.rb`) is a single pure-Ruby file with no gem dependencies — there is no build step. It runs on Ruby 2.5 or later and produces output identical to the C++ and C# implementations.
+
+### Running the CLI tool
+
+Hash a string passed as an argument:
+```sh
+ruby src/ruby/main.rb "Hello, World!"
+# 0x352256EFEDC72BD1
+```
+
+Interactive mode and multi-word input work as in the other CLIs:
+```sh
+ruby src/ruby/main.rb The quick brown fox
+ruby src/ruby/main.rb
+```
+
+Print pass/fail results for all built-in test vectors:
+```sh
+ruby src/ruby/main.rb --test
+```
+
+The `--test` mode exits with code **0** on success and **1** if any vector fails, so it can be used in CI without RSpec installed.
+
+### Running the Ruby tests (RSpec)
+
+Install RSpec once:
+```sh
+gem install rspec
+```
+
+Run the suite from the repository root:
+```sh
+rspec tests/ruby/microhash_spec.rb
+```
+
+Expected output:
+```
+19 examples, 0 failures
+```
+
+### Using the library
+
+```ruby
+require_relative 'src/ruby/microhash'
+
+MicroHash.compute_hash('Hello, World!')   # => 0x352256EFEDC72BD1 (Integer)
+MicroHash.hexdigest('Hello, World!')      # => "352256EFEDC72BD1"
+```
+
+Strings are hashed as raw bytes (encoding-agnostic); an `Array` of byte values is also accepted. To use it in a Rails application, copy `microhash.rb` into `lib/` and require it — no gems, no native extensions.
+
+---
+
 ## Docker (C# implementation)
 
 The Dockerfile at `src/csharp/Dockerfile` performs a multi-stage build:
@@ -249,21 +306,24 @@ docker run --rm -it microhash
 
 ## Test Coverage Summary
 
-| Test group | C++ (`microhash_tests`) | C# (`HashPipeTests`) |
-|---|---|---|
-| Known-good test vectors (13 strings) | ✅ | ✅ |
-| Benchmark inputs — small `"veni"` (4 B) | ✅ | ✅ |
-| Benchmark inputs — medium 1 KB (`i%256`) | ✅ | ✅ |
-| Benchmark inputs — large 1 MB (`i%256`) | ✅ | ✅ |
-| Determinism — same input hashed twice | ✅ | ✅ |
-| Pointer overload == vector overload | ✅ | *C++ only* |
-| Sensitivity — 8 distinct-input pairs | ✅ | ✅ |
-| All 256 single-byte values differ from empty | ✅ | ✅ |
-| Block-boundary lengths (31, 32, 33 bytes) | ✅ | ✅ |
-| **Collision resistance** — 100K sequential inputs, 0 collisions | ✅ | ✅ |
-| **Avalanche effect** — avg bits changed per single-bit flip, 20–44/64 | ✅ | ✅ |
-| **Bit distribution** — each output bit 44%–56% frequency over 65K inputs | ✅ | ✅ |
-| **Total assertions** | **294** | **38** |
+| Test group | C++ (`microhash_tests`) | C# (`HashPipeTests`) | Ruby (`microhash_spec`) |
+|---|---|---|---|
+| Known-good test vectors (13 strings) | ✅ | ✅ | ✅ |
+| Benchmark inputs — small `"veni"` (4 B) | ✅ | ✅ | — |
+| Benchmark inputs — medium 1 KB (`i%256`) | ✅ | ✅ | — |
+| Benchmark inputs — large 1 MB (`i%256`) | ✅ | ✅ | — |
+| Determinism — same input hashed twice | ✅ | ✅ | ✅ |
+| Pointer overload == vector overload | ✅ | *C++ only* | — |
+| String input == byte-array input | — | — | ✅ |
+| Encoding-agnostic (UTF-8 vs binary bytes) | — | — | ✅ |
+| Sensitivity — 8 distinct-input pairs | ✅ | ✅ | — |
+| All 256 single-byte values differ from empty | ✅ | ✅ | — |
+| Block-boundary lengths (31, 32, 33 bytes) | ✅ | ✅ | ✅ *(11 lengths)* |
+| Digest fits in 64 bits | — | — | ✅ |
+| **Collision resistance** — 100K sequential inputs, 0 collisions | ✅ | ✅ | — |
+| **Avalanche effect** — avg bits changed per single-bit flip, 20–44/64 | ✅ | ✅ | — |
+| **Bit distribution** — each output bit 44%–56% frequency over 65K inputs | ✅ | ✅ | — |
+| **Total assertions** | **294** | **38** | **19 examples** |
 
 > The C++ runner counts each `ASSERT_EQ`/`ASSERT_NE` call individually (including the 256-byte loop), while xUnit counts parameterised theory cases as separate test cases.
 
