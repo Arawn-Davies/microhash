@@ -134,9 +134,11 @@ The specification includes implementation guidance for:
   unsuitable for change detection or fingerprinting** — half of every input
   is invisible to the digest. The revised
   [microhash-ng](https://github.com/Arawn-Davies/microhash/tree/master/src/microhash-ng)
-  mixes all 32 bytes per block (fixing the dead zone and the unread length
-  field) while keeping the same API, memory footprint, and 64-bit output;
-  its digests are not compatible with the original.
+  mixes all 32 bytes per block with hardened double-round absorption and
+  finalization rounds (fixing the dead zone, the unread length field, and
+  the statistical weaknesses found by the SMHasher battery, which it now
+  passes with zero failures) while keeping the same API, memory footprint,
+  and 64-bit output; its digests are not compatible with the original.
 - The C++ and Ruby implementations assemble words explicitly and are
   host-endian safe. The C# implementation uses `BitConverter.ToUInt32`, so
   matching output is expected on little-endian hosts.

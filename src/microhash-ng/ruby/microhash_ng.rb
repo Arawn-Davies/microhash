@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
-# MicroHashNG — revised microhash that mixes ALL 32 bytes of every block.
+# MicroHashNG — revised microhash, hardened against the SMHasher battery.
 #
-# Differences from the original (src/ruby/microhash.rb): the mixing loop
-# consumes eight 4-byte words per block instead of four, so bytes 16-31
-# (previously a dead zone) and the encoded length field now influence the
-# digest. Output is NOT compatible with original microhash.
+# Differences from the original (src/ruby/microhash.rb):
+#   - All eight 4-byte words of each 32-byte block are mixed (no dead zone;
+#     the encoded length field influences the digest).
+#   - Each word is absorbed with TWO ARX rounds (the second reinjects the
+#     word rotated by 16), preventing the sparse-key collision cancellations
+#     SMHasher found in single-round absorption.
+#   - Four ARX finalization rounds with pi-derived constants diffuse the
+#     final words into the whole state.
+#
+# Output is NOT compatible with original microhash.
 #
 # If the native extension (ext/microhash_ng) has been compiled, hashing is
 # delegated to C; otherwise the pure-Ruby implementation below is used.
@@ -13,6 +19,7 @@
 module MicroHashNG
   MASK32 = 0xFFFFFFFF
   BLOCK_SIZE = 32
+  FINAL_CONSTANTS = [0x13198A2E, 0x03707344, 0xA4093822, 0x299F31D0].freeze
 
   NATIVE = begin
     require_relative 'ext/microhash_ng/microhash_ng_ext'
@@ -57,7 +64,7 @@ module MicroHashNG
         end
       end
 
-      # ng: all eight words per block (bytes 0-31), not just the first four
+      # ng: all eight words per block, two ARX rounds per word
       8.times do |i|
         base = i * 4
         word = block[base] |
@@ -67,7 +74,14 @@ module MicroHashNG
 
         s0 = (rol32(s0 ^ word, 5) + s1) & MASK32
         s1 = rol32((s1 + word) & MASK32, 11) ^ s0
+        s0 = (rol32(s0 ^ rol32(word, 16), 5) + s1) & MASK32
+        s1 = rol32((s1 + word) & MASK32, 11) ^ s0
       end
+    end
+
+    FINAL_CONSTANTS.each do |c|
+      s0 = (rol32(s0 ^ c, 5) + s1) & MASK32
+      s1 = rol32((s1 + c) & MASK32, 11) ^ s0
     end
 
     final = s0 ^ rol32(s1, 3)

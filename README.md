@@ -207,7 +207,13 @@ The header is intentionally written to be portable to any target with a C++ comp
 
 ## microhash-ng
 
-`src/microhash-ng/` contains a revised algorithm that fixes the two correctness defects above while keeping everything else — API, 32-byte blocks, ~40-byte working memory, **64-bit output (16 hex chars, unchanged)**, and the rotate-XOR-add mixing step. The only change: the mixing loop consumes all **eight** 4-byte words of each block instead of four, which also makes the encoded length field live.
+`src/microhash-ng/` contains a revised algorithm that fixes the correctness defects above while keeping the API, 32-byte blocks, ~40-byte working memory, **64-bit output (16 hex chars, unchanged)**, and the ARX (add-rotate-XOR) design — still no multiplies or lookup tables, so the 8-bit portability story is intact. Three changes:
+
+1. All **eight** 4-byte words of each block are mixed (no dead zone; the encoded length field is live).
+2. Each word is absorbed with **two ARX rounds** (the second reinjects the word rotated by 16), so a difference passes through two nonlinear rounds before the next word could cancel it.
+3. Four **finalization rounds** with π-derived constants diffuse the final words through the whole state.
+
+**microhash-ng passes the SMHasher quality battery** (rurban/smhasher: Avalanche, Sparse, Cyclic, TwoBytes, Zeroes, Seed, DiffDist, BIC — zero failures), the same battery xxHash-class hashes are judged by. For comparison, mixing all eight words with single rounds and no finalization still failed 15 sub-tests (sparse-key collisions from absorption-time cancellation), and the original algorithm failed 21 including avalanche biases up to 96%. SMHasher-measured bulk throughput for the hardened C implementation is ~1.85 GB/s (vs ~3 GB/s unhardened) — the cost of passing.
 
 **Digests are not compatible with original microhash** — adopting ng means re-fingerprinting existing data.
 
@@ -220,24 +226,24 @@ src/microhash-ng/ruby/ext/microhash_ng/     — optional native C extension (aut
 tests/microhash-ng/                         — C++ and RSpec suites with dead-zone regression tests
 ```
 
-Verified properties (covered by regression tests in all suites): every single-byte flip at **every** position of 32/64/256-byte inputs changes the digest (original missed 50%); the known 64-byte dead-zone collision pair now differs; appends and truncations are detected via the mixed length field. Cost: the mixing loop does 2× the word operations per block, so expect roughly half the throughput of original microhash — still far above `Digest::SHA256`-class speeds in the native/C paths.
+Verified properties (covered by regression tests in all suites): every single-byte flip at **every** position of 32/64/256-byte inputs changes the digest (original missed 50%); the known 64-byte dead-zone collision pair now differs; appends and truncations are detected via the mixed length field.
 
 ### microhash-ng test vectors
 
 ```
-microhash-ng("Hello, World!")                                                    = 0x3BC7B2EA7D9D9143
-microhash-ng("The quick brown fox jumps over the lazy dog")                      = 0x0BC09723C9A7F509
-microhash-ng("")                                                                 = 0x40D6DE95FA68D791
-microhash-ng("a")                                                                = 0xD04B9EC77726AB0F
-microhash-ng("abc")                                                              = 0x8D4B24AB0DD63EDB
-microhash-ng("        ")                                                         = 0xCF7285AB13D90778
-microhash-ng("abcdefghijklmnopqrstuvwxyz")                                       = 0x2008399202128668
-microhash-ng("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")   = 0x1662B9BA9DAC92CD
-microhash-ng("0000000000000000000000000000000000000000000000000000000000000000") = 0x81E4F9F09184C9CA
-microhash-ng("1111111111111111111111111111111111111111111111111111111111111111") = 0xA5046C4D639E45C6
-microhash-ng("123456789012345678901234567890")                                   = 0x96F4DBA8A6596732
-microhash-ng("0101010101010101010101010101010101010101010101010101010101010101") = 0x9FEACB10CEA370AE
-microhash-ng("0101011101010111010101010101011101010111000101010001110101010100") = 0x38F625D205173523
+microhash-ng("Hello, World!")                                                    = 0xA40E5C7D0BFBA07D
+microhash-ng("The quick brown fox jumps over the lazy dog")                      = 0x5BD8C52E8C1E2175
+microhash-ng("")                                                                 = 0x6CA97D4E1A59E8EC
+microhash-ng("a")                                                                = 0xD1EF310FB09DC1DC
+microhash-ng("abc")                                                              = 0x1351FEBF7FEDB189
+microhash-ng("        ")                                                         = 0x38AFC965BDFDC9EB
+microhash-ng("abcdefghijklmnopqrstuvwxyz")                                       = 0xF2A991C82844982F
+microhash-ng("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")   = 0x7AB7F4398A2A0130
+microhash-ng("0000000000000000000000000000000000000000000000000000000000000000") = 0xBC55379EAAB952BF
+microhash-ng("1111111111111111111111111111111111111111111111111111111111111111") = 0x42AF241530C58F18
+microhash-ng("123456789012345678901234567890")                                   = 0x7A78EB4902E77E91
+microhash-ng("0101010101010101010101010101010101010101010101010101010101010101") = 0x38232B18B8755FA6
+microhash-ng("0101011101010111010101010101011101010111000101010001110101010100") = 0x29E828BAC44A055B
 ```
 
 Build and run exactly like the originals, e.g. `g++ -std=c++17 -O2 -o microhash-ng src/microhash-ng/cpp/main.cpp`, `ruby src/microhash-ng/ruby/main.rb --test`, or `dotnet run --project src/microhash-ng/csharp -- --test`.

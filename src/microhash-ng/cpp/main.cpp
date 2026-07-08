@@ -16,19 +16,19 @@ uint64_t hashString(const std::string& s) {
 struct TestVector { const char* input; uint64_t expected; };
 
 const TestVector kTestVectors[] = {
-    {"Hello, World!",                                                    0x3BC7B2EA7D9D9143ull},
-    {"The quick brown fox jumps over the lazy dog",                      0x0BC09723C9A7F509ull},
-    {"",                                                                 0x40D6DE95FA68D791ull},
-    {"a",                                                                0xD04B9EC77726AB0Full},
-    {"abc",                                                              0x8D4B24AB0DD63EDBull},
-    {"        ",                                                         0xCF7285AB13D90778ull},
-    {"abcdefghijklmnopqrstuvwxyz",                                       0x2008399202128668ull},
-    {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",   0x1662B9BA9DAC92CDull},
-    {"0000000000000000000000000000000000000000000000000000000000000000", 0x81E4F9F09184C9CAull},
-    {"1111111111111111111111111111111111111111111111111111111111111111", 0xA5046C4D639E45C6ull},
-    {"123456789012345678901234567890",                                   0x96F4DBA8A6596732ull},
-    {"0101010101010101010101010101010101010101010101010101010101010101", 0x9FEACB10CEA370AEull},
-    {"0101011101010111010101010101011101010111000101010001110101010100", 0x38F625D205173523ull},
+    {"Hello, World!",                                                    0xA40E5C7D0BFBA07Dull},
+    {"The quick brown fox jumps over the lazy dog",                      0x5BD8C52E8C1E2175ull},
+    {"",                                                                 0x6CA97D4E1A59E8ECull},
+    {"a",                                                                0xD1EF310FB09DC1DCull},
+    {"abc",                                                              0x1351FEBF7FEDB189ull},
+    {"        ",                                                         0x38AFC965BDFDC9EBull},
+    {"abcdefghijklmnopqrstuvwxyz",                                       0xF2A991C82844982Full},
+    {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",   0x7AB7F4398A2A0130ull},
+    {"0000000000000000000000000000000000000000000000000000000000000000", 0xBC55379EAAB952BFull},
+    {"1111111111111111111111111111111111111111111111111111111111111111", 0x42AF241530C58F18ull},
+    {"123456789012345678901234567890",                                   0x7A78EB4902E77E91ull},
+    {"0101010101010101010101010101010101010101010101010101010101010101", 0x38232B18B8755FA6ull},
+    {"0101011101010111010101010101011101010111000101010001110101010100", 0x29E828BAC44A055Bull},
 };
 
 int runTests() {

@@ -4,17 +4,21 @@
 #include <cstdint>
 #include <vector>
 
-// microhash-ng — revised microhash that mixes ALL 32 bytes of every block.
+// microhash-ng — revised microhash, hardened against the SMHasher battery.
 //
 // Differences from original microhash (src/cpp/microhash.hpp):
 //   - The mixing loop consumes eight 4-byte words per block instead of four,
-//     so bytes 16-31 (previously a dead zone) now influence the digest.
-//   - As a consequence the big-endian length field in the final padding
-//     block (bytes 28-31) is mixed in, so appends/truncations that only
-//     touch former dead zones are detected.
+//     so bytes 16-31 (previously a dead zone) now influence the digest, and
+//     the big-endian length field in the final padding block is mixed in.
+//   - Each word is absorbed with TWO ARX rounds (the second reinjects the
+//     word rotated by 16), so a difference passes through two nonlinear
+//     rounds before the next word could cancel it. Fixes the sparse-key
+//     collisions SMHasher found in single-round absorption.
+//   - Four ARX finalization rounds with pi-derived constants diffuse the
+//     final words into the whole state. Fixes tail-byte avalanche.
 //
-// Output is NOT compatible with original microhash. State constants,
-// padding layout, per-word mixing, and finalisation are unchanged.
+// Output is NOT compatible with original microhash. State size, padding
+// layout, and the 64-bit digest format are unchanged.
 namespace MicroHashNG {
 
 class hashPipe {
@@ -22,6 +26,10 @@ public:
     static uint64_t ComputeHash(const uint8_t* data, size_t length) {
         // State initialization
         uint32_t state[2] = { 0x243F6A88u, 0x85A308D3u };
+
+        // Finalization round constants (continuation of pi's fraction)
+        static const uint32_t kFinalConst[4] =
+            { 0x13198A2Eu, 0x03707344u, 0xA4093822u, 0x299F31D0u };
 
         const int blockSize = 32;
         const size_t paddedLen = ((length + 5 + blockSize - 1) / blockSize) * blockSize;
@@ -44,7 +52,7 @@ public:
                 }
             }
 
-            // ng: all eight words per block (bytes 0-31), not just the first four
+            // ng: all eight words per block, two ARX rounds per word
             for (int i = 0; i < 8; i++) {
                 size_t base = (size_t)i * 4;
                 uint32_t word =
@@ -55,7 +63,14 @@ public:
 
                 state[0] = RotateLeft(state[0] ^ word, 5) + state[1];
                 state[1] = RotateLeft(state[1] + word, 11) ^ state[0];
+                state[0] = RotateLeft(state[0] ^ RotateLeft(word, 16), 5) + state[1];
+                state[1] = RotateLeft(state[1] + word, 11) ^ state[0];
             }
+        }
+
+        for (int r = 0; r < 4; r++) {
+            state[0] = RotateLeft(state[0] ^ kFinalConst[r], 5) + state[1];
+            state[1] = RotateLeft(state[1] + kFinalConst[r], 11) ^ state[0];
         }
 
         uint32_t final_val = state[0] ^ RotateLeft(state[1], 3);

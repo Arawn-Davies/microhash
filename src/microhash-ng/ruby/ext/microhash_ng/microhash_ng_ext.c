@@ -1,6 +1,7 @@
 /*
  * MicroHashNG native extension — same algorithm as
- * src/microhash-ng/cpp/microhash_ng.hpp (all 8 words per block mixed).
+ * src/microhash-ng/cpp/microhash_ng.hpp (all 8 words per block, two ARX
+ * rounds per word, four finalization rounds).
  * Exposes MicroHashNG.native_compute_hash(String) -> Integer.
  */
 #include "ruby.h"
@@ -11,6 +12,9 @@ static uint32_t rotate_left(uint32_t value, int bits)
 {
     return (value << bits) | (value >> (32 - bits));
 }
+
+static const uint32_t final_constants[4] =
+    { 0x13198A2Eu, 0x03707344u, 0xA4093822u, 0x299F31D0u };
 
 static uint64_t compute_hash(const uint8_t *data, size_t length)
 {
@@ -37,7 +41,7 @@ static uint64_t compute_hash(const uint8_t *data, size_t length)
             }
         }
 
-        /* ng: all eight words per block (bytes 0-31), not just the first four */
+        /* ng: all eight words per block, two ARX rounds per word */
         for (int i = 0; i < 8; i++) {
             size_t base = (size_t)i * 4;
             uint32_t word =
@@ -48,7 +52,14 @@ static uint64_t compute_hash(const uint8_t *data, size_t length)
 
             state[0] = rotate_left(state[0] ^ word, 5) + state[1];
             state[1] = rotate_left(state[1] + word, 11) ^ state[0];
+            state[0] = rotate_left(state[0] ^ rotate_left(word, 16), 5) + state[1];
+            state[1] = rotate_left(state[1] + word, 11) ^ state[0];
         }
+    }
+
+    for (int r = 0; r < 4; r++) {
+        state[0] = rotate_left(state[0] ^ final_constants[r], 5) + state[1];
+        state[1] = rotate_left(state[1] + final_constants[r], 11) ^ state[0];
     }
 
     uint32_t final_val = state[0] ^ rotate_left(state[1], 3);

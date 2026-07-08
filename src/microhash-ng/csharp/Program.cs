@@ -7,19 +7,19 @@ class Program
 {
     static readonly (string Input, ulong Expected)[] TestVectors =
     {
-        ("Hello, World!",                                                    0x3BC7B2EA7D9D9143ul),
-        ("The quick brown fox jumps over the lazy dog",                      0x0BC09723C9A7F509ul),
-        ("",                                                                 0x40D6DE95FA68D791ul),
-        ("a",                                                                0xD04B9EC77726AB0Ful),
-        ("abc",                                                              0x8D4B24AB0DD63EDBul),
-        ("        ",                                                         0xCF7285AB13D90778ul),
-        ("abcdefghijklmnopqrstuvwxyz",                                       0x2008399202128668ul),
-        ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",   0x1662B9BA9DAC92CDul),
-        ("0000000000000000000000000000000000000000000000000000000000000000", 0x81E4F9F09184C9CAul),
-        ("1111111111111111111111111111111111111111111111111111111111111111", 0xA5046C4D639E45C6ul),
-        ("123456789012345678901234567890",                                   0x96F4DBA8A6596732ul),
-        ("0101010101010101010101010101010101010101010101010101010101010101", 0x9FEACB10CEA370AEul),
-        ("0101011101010111010101010101011101010111000101010001110101010100", 0x38F625D205173523ul),
+        ("Hello, World!",                                                    0xA40E5C7D0BFBA07Dul),
+        ("The quick brown fox jumps over the lazy dog",                      0x5BD8C52E8C1E2175ul),
+        ("",                                                                 0x6CA97D4E1A59E8ECul),
+        ("a",                                                                0xD1EF310FB09DC1DCul),
+        ("abc",                                                              0x1351FEBF7FEDB189ul),
+        ("        ",                                                         0x38AFC965BDFDC9EBul),
+        ("abcdefghijklmnopqrstuvwxyz",                                       0xF2A991C82844982Ful),
+        ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",   0x7AB7F4398A2A0130ul),
+        ("0000000000000000000000000000000000000000000000000000000000000000", 0xBC55379EAAB952BFul),
+        ("1111111111111111111111111111111111111111111111111111111111111111", 0x42AF241530C58F18ul),
+        ("123456789012345678901234567890",                                   0x7A78EB4902E77E91ul),
+        ("0101010101010101010101010101010101010101010101010101010101010101", 0x38232B18B8755FA6ul),
+        ("0101011101010111010101010101011101010111000101010001110101010100", 0x29E828BAC44A055Bul),
     };
 
     static ulong Hash(string s) => hashPipeNG.ComputeHash(Encoding.UTF8.GetBytes(s));

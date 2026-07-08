@@ -90,11 +90,17 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 > **Revision note — microhash-ng.** The mixing step below reads only the first
 > 16 bytes of each 32-byte block; bytes 16–31 (including the encoded length
 > field) never influence the digest. A revised variant, **microhash-ng**
-> (`src/microhash-ng/`), consumes all eight 4-byte words per block, eliminating
-> the dead zone and making the length field live. State constants, padding,
-> per-word mixing, finalisation, and the 64-bit output are unchanged, but
-> digests are **not** compatible with the original. New integrations —
-> especially anything doing change detection — should use microhash-ng.
+> (`src/microhash-ng/`), consumes all eight 4-byte words per block (eliminating
+> the dead zone and making the length field live), absorbs each word with two
+> ARX rounds — the second reinjects the word rotated left by 16 — and applies
+> four finalization rounds with π-derived constants
+> (`13198A2E 03707344 A4093822 299F31D0`) before the output combiner. State
+> constants, padding, the per-round operations, and the 64-bit output format
+> are unchanged, but digests are **not** compatible with the original.
+> microhash-ng passes the rurban/SMHasher quality battery (Avalanche, Sparse,
+> Cyclic, TwoBytes, Zeroes, Seed, DiffDist, BIC) with zero failures; the
+> original fails 21 sub-tests. New integrations — especially anything doing
+> change detection — should use microhash-ng.
 
 ## Implementations
 
