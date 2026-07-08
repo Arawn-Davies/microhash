@@ -23,8 +23,8 @@ jobs:
       - name: Install RSpec
         run: gem install rspec --no-document
 
-      - name: Run RSpec suite (pure Ruby)
-        run: rspec tests/ruby/microhash_spec.rb --format documentation
+      - name: Run RSpec suites (pure Ruby)
+        run: rspec tests/ruby/microhash_spec.rb tests/microhash-ng/ruby/microhash_ng_spec.rb --format documentation
 
       - name: Build native extension
         run: |
@@ -32,8 +32,16 @@ jobs:
           ruby extconf.rb
           make V=1
 
-      - name: Run RSpec suite (native extension)
-        run: rspec tests/ruby/microhash_spec.rb --format documentation
+      - name: Build native extension (microhash-ng)
+        run: |
+          cd src/microhash-ng/ruby/ext/microhash_ng
+          ruby extconf.rb
+          make V=1
+
+      - name: Run RSpec suites (native extensions)
+        run: rspec tests/ruby/microhash_spec.rb tests/microhash-ng/ruby/microhash_ng_spec.rb --format documentation
 
       - name: Run CLI test vectors
-        run: ruby src/ruby/main.rb --test
+        run: |
+          ruby src/ruby/main.rb --test
+          ruby src/microhash-ng/ruby/main.rb --test

@@ -87,6 +87,15 @@ The upper 32 bits of the digest are a mix of both state words; the lower 32 bits
 
 ---
 
+> **Revision note — microhash-ng.** The mixing step below reads only the first
+> 16 bytes of each 32-byte block; bytes 16–31 (including the encoded length
+> field) never influence the digest. A revised variant, **microhash-ng**
+> (`src/microhash-ng/`), consumes all eight 4-byte words per block, eliminating
+> the dead zone and making the length field live. State constants, padding,
+> per-word mixing, finalisation, and the 64-bit output are unchanged, but
+> digests are **not** compatible with the original. New integrations —
+> especially anything doing change detection — should use microhash-ng.
+
 ## Implementations
 
 ### C++ (`src/cpp/microhash.hpp`)

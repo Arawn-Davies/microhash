@@ -130,7 +130,13 @@ The specification includes implementation guidance for:
   length-extension attacks.
 - Only bytes `0` through `15` of each 32-byte block are mixed. Bytes `16`
   through `31`, including the encoded length field in the final block, do not
-  currently influence the output.
+  currently influence the output. **This makes the original algorithm
+  unsuitable for change detection or fingerprinting** — half of every input
+  is invisible to the digest. The revised
+  [microhash-ng](https://github.com/Arawn-Davies/microhash/tree/master/src/microhash-ng)
+  mixes all 32 bytes per block (fixing the dead zone and the unread length
+  field) while keeping the same API, memory footprint, and 64-bit output;
+  its digests are not compatible with the original.
 - The C++ and Ruby implementations assemble words explicitly and are
   host-endian safe. The C# implementation uses `BitConverter.ToUInt32`, so
   matching output is expected on little-endian hosts.

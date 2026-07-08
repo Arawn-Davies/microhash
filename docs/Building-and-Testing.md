@@ -323,6 +323,28 @@ docker run --rm -it microhash
 
 ---
 
+## microhash-ng
+
+The revised implementations under `src/microhash-ng/` build and run identically to their originals — substitute the paths:
+
+```sh
+# C++ CLI and tests
+g++ -std=c++17 -O2 -o microhash-ng src/microhash-ng/cpp/main.cpp
+g++ -std=c++17 -O2 -I src/microhash-ng/cpp -o /tmp/microhash_ng_tests tests/microhash-ng/cpp/microhash_ng_tests.cpp && /tmp/microhash_ng_tests
+
+# C# CLI (standalone project, not part of microhash.sln)
+dotnet run --project src/microhash-ng/csharp -- --test
+
+# Ruby CLI, RSpec suite, and optional native extension
+ruby src/microhash-ng/ruby/main.rb --test
+rspec tests/microhash-ng/ruby/microhash_ng_spec.rb
+cd src/microhash-ng/ruby/ext/microhash_ng && ruby extconf.rb && make
+```
+
+The ng suites include regression tests for the two defects fixed relative to the original: every single-byte flip at every position of 32/64/256-byte inputs must change the digest, the known 64-byte dead-zone collision pair must differ, and length changes (appends/truncations) must be detected. All ng suites run in CI alongside the originals.
+
+---
+
 ## Test Coverage Summary
 
 | Test group | C++ (`microhash_tests`) | C# (`HashPipeTests`) | Ruby (`microhash_spec`) |

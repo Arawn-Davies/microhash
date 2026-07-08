@@ -370,3 +370,8 @@ src/ruby/ext/microhash/*.o
 src/ruby/ext/microhash/*.so
 src/ruby/ext/microhash/*.bundle
 src/ruby/ext/microhash/mkmf.log
+src/microhash-ng/ruby/ext/microhash_ng/Makefile
+src/microhash-ng/ruby/ext/microhash_ng/*.o
+src/microhash-ng/ruby/ext/microhash_ng/*.so
+src/microhash-ng/ruby/ext/microhash_ng/*.bundle
+src/microhash-ng/ruby/ext/microhash_ng/mkmf.log

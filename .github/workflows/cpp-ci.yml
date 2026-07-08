@@ -23,3 +23,12 @@ jobs:
 
       - name: Run C++ tests
         run: /tmp/microhash_tests
+
+      - name: Build C++ tests (microhash-ng)
+        run: |
+          g++ -std=c++17 -I src/microhash-ng/cpp \
+              -o /tmp/microhash_ng_tests \
+              tests/microhash-ng/cpp/microhash_ng_tests.cpp
+
+      - name: Run C++ tests (microhash-ng)
+        run: /tmp/microhash_ng_tests

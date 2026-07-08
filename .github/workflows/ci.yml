@@ -28,3 +28,6 @@ jobs:
 
       - name: Test
         run: dotnet test microhash.sln --no-build -c Release --verbosity normal
+
+      - name: Test microhash-ng vectors
+        run: dotnet run --project src/microhash-ng/csharp -c Release -- --test
