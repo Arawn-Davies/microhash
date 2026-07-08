@@ -113,6 +113,22 @@ ruby extconf.rb && make
 
 ---
 
+## Benchmarks
+
+Indicative single-thread numbers on one x86-64 machine (WSL2), hashing the same three inputs in a tight loop after warm-up. C++ built with `g++ -O2`; C# as a .NET Release build; Ruby figures measured on CRuby 3.1.3. `Digest::SHA256` (OpenSSL's C implementation, via Ruby) is included as a reference point. Absolute numbers will vary by machine — the ratios are the point.
+
+| Implementation | 13 B / op | 1 KB / op | 64 KB / op | 64 KB throughput |
+|---|---|---|---|---|
+| C++ (`g++ -O2`) | 18 ns | 371 ns | 23.6 µs | ~2,780 MB/s |
+| Ruby native extension | 60 ns | 698 ns | 37.8 µs | ~1,730 MB/s |
+| C# (.NET, Release) | ~280 ns | ~5.2 µs | ~50 µs | ~1,310 MB/s |
+| `Digest::SHA256` (OpenSSL) | 509 ns | 3.5 µs | 188 µs | ~350 MB/s |
+| Ruby (pure) | 2.7 µs | 70.7 µs | 4.53 ms | ~14.5 MB/s |
+
+microhash is not cryptographic (see limitations below), so this is not an apples-to-apples comparison with SHA-256 — it is only meant to show where each implementation sits when a fast non-cryptographic digest is sufficient.
+
+---
+
 ## Algorithm
 
 **State** — two 32-bit words initialised from the fractional part of π:
