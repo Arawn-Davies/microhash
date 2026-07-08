@@ -9,7 +9,7 @@
 require_relative '../../../src/microhash-ng/ruby/microhash_ng'
 
 RSpec.describe MicroHashNG do
-  TEST_VECTORS = {
+  NG_TEST_VECTORS = {
     'Hello, World!' => 0xA40E5C7D0BFBA07D,
     'The quick brown fox jumps over the lazy dog' => 0x5BD8C52E8C1E2175,
     '' => 0x6CA97D4E1A59E8EC,
@@ -26,7 +26,7 @@ RSpec.describe MicroHashNG do
   }.freeze
 
   describe '.compute_hash' do
-    TEST_VECTORS.each do |input, expected|
+    NG_TEST_VECTORS.each do |input, expected|
       it format('hashes %p to 0x%016X', input, expected) do
         expect(described_class.compute_hash(input)).to eq(expected)
       end
@@ -44,7 +44,7 @@ RSpec.describe MicroHashNG do
     end
 
     it 'always fits in 64 bits' do
-      TEST_VECTORS.each_key do |input|
+      NG_TEST_VECTORS.each_key do |input|
         expect(described_class.compute_hash(input)).to be_between(0, 0xFFFFFFFFFFFFFFFF)
       end
     end
@@ -85,18 +85,17 @@ RSpec.describe MicroHashNG do
 
   describe '.pure_compute_hash' do
     it 'matches compute_hash for every test vector (native or not)' do
-      TEST_VECTORS.each do |input, expected|
+      NG_TEST_VECTORS.each do |input, expected|
         expect(described_class.pure_compute_hash(input)).to eq(expected)
       end
     end
 
-    if MicroHashNG::NATIVE
-      it 'agrees with the native extension across many lengths' do
-        (0..200).each do |len|
-          input = (0...len).map { |i| ((i * 7) + len) % 256 }.pack('C*')
-          expect(described_class.native_compute_hash(input))
-            .to eq(described_class.pure_compute_hash(input)), "length #{len}"
-        end
+    it 'agrees with the native extension across many lengths',
+       skip: (MicroHashNG::NATIVE ? false : 'native extension not compiled') do
+      (0..200).each do |len|
+        input = (0...len).map { |i| ((i * 7) + len) % 256 }.pack('C*')
+        expect(described_class.native_compute_hash(input))
+          .to eq(described_class.pure_compute_hash(input)), "length #{len}"
       end
     end
   end

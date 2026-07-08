@@ -41,50 +41,50 @@ module MicroHashNG
   end
 
   # Pure-Ruby reference path; used when the native extension is absent.
+  #
+  # Performance notes: the whole padded message is built once as a binary
+  # String and split into little-endian words by String#unpack ('V*'), which
+  # runs in C. The mixing loop inlines the rotates instead of calling rol32
+  # per word. Output is identical to the native extension and the C++/C#
+  # implementations.
   def pure_compute_hash(data)
-    bytes = data.is_a?(String) ? data.bytes : data
-    length = bytes.length
+    str = data.is_a?(String) ? data : data.pack('C*')
+    length = str.bytesize
+
+    # Padding: 0x80, zero fill, then big-endian 32-bit length in the last
+    # 4 bytes — the layout shared by every implementation.
+    padded_len = ((length + 5 + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE
+    padded = str.b << 0x80.chr << ("\0" * (padded_len - length - 5)) << [length].pack('N')
+    words = padded.unpack('V*')
 
     s0 = 0x243F6A88
     s1 = 0x85A308D3
 
-    padded_len = ((length + 5 + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE
-
-    (0...padded_len).step(BLOCK_SIZE) do |offset|
-      block = Array.new(BLOCK_SIZE) do |i|
-        index = offset + i
-        if index < length
-          bytes[index]
-        elsif index == length
-          0x80
-        elsif index >= padded_len - 4
-          (length >> (8 * (BLOCK_SIZE - 1 - i))) & 0xFF
-        else
-          0x00
-        end
-      end
-
-      # ng: all eight words per block, two ARX rounds per word
-      8.times do |i|
-        base = i * 4
-        word = block[base] |
-               (block[base + 1] << 8) |
-               (block[base + 2] << 16) |
-               (block[base + 3] << 24)
-
-        s0 = (rol32(s0 ^ word, 5) + s1) & MASK32
-        s1 = rol32((s1 + word) & MASK32, 11) ^ s0
-        s0 = (rol32(s0 ^ rol32(word, 16), 5) + s1) & MASK32
-        s1 = rol32((s1 + word) & MASK32, 11) ^ s0
-      end
+    # ng: every word absorbed with two ARX rounds (second reinjects the
+    # word rotated left by 16)
+    i = 0
+    n = words.length
+    while i < n
+      w = words[i]
+      t = s0 ^ w
+      s0 = ((((t << 5) | (t >> 27)) & MASK32) + s1) & MASK32
+      t = (s1 + w) & MASK32
+      s1 = (((t << 11) | (t >> 21)) & MASK32) ^ s0
+      t = s0 ^ (((w << 16) | (w >> 16)) & MASK32)
+      s0 = ((((t << 5) | (t >> 27)) & MASK32) + s1) & MASK32
+      t = (s1 + w) & MASK32
+      s1 = (((t << 11) | (t >> 21)) & MASK32) ^ s0
+      i += 1
     end
 
     FINAL_CONSTANTS.each do |c|
-      s0 = (rol32(s0 ^ c, 5) + s1) & MASK32
-      s1 = rol32((s1 + c) & MASK32, 11) ^ s0
+      t = s0 ^ c
+      s0 = ((((t << 5) | (t >> 27)) & MASK32) + s1) & MASK32
+      t = (s1 + c) & MASK32
+      s1 = (((t << 11) | (t >> 21)) & MASK32) ^ s0
     end
 
-    final = s0 ^ rol32(s1, 3)
+    final = s0 ^ (((s1 << 3) | (s1 >> 29)) & MASK32)
     (final << 32) | s1
   end
 

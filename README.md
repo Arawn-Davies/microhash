@@ -111,7 +111,7 @@ cd src/ruby/ext/microhash
 ruby extconf.rb && make
 ```
 
-`microhash.rb` auto-detects the compiled extension (`MicroHash::NATIVE` is `true` when loaded) and transparently delegates hashing to C — the API and output are unchanged, and the pure-Ruby path remains as a fallback wherever no compiler is available. On Ruby 3.1 the native path is roughly 45–120× faster than pure Ruby and ~5–8× faster than `Digest::SHA256`.
+`microhash.rb` auto-detects the compiled extension (`MicroHash::NATIVE` is `true` when loaded) and transparently delegates hashing to C — the API and output are unchanged, and the pure-Ruby path remains as a fallback wherever no compiler is available. On Ruby 3.1 the native path is roughly 18–33× faster than the (already optimized) pure-Ruby path and ~5–8× faster than `Digest::SHA256`.
 
 ---
 
@@ -121,13 +121,30 @@ Indicative single-thread numbers on one x86-64 machine (WSL2), hashing the same 
 
 | Implementation | 13 B / op | 1 KB / op | 64 KB / op | 64 KB throughput |
 |---|---|---|---|---|
-| C++ (`g++ -O2`) | 18 ns | 371 ns | 23.6 µs | ~2,780 MB/s |
-| Ruby native extension | 60 ns | 698 ns | 37.8 µs | ~1,730 MB/s |
-| C# (.NET, Release) | ~280 ns | ~5.2 µs | ~50 µs | ~1,310 MB/s |
-| `Digest::SHA256` (OpenSSL) | 509 ns | 3.5 µs | 188 µs | ~350 MB/s |
-| Ruby (pure) | 2.7 µs | 70.7 µs | 4.53 ms | ~14.5 MB/s |
+| C++ original (`g++ -O2`) | 18 ns | 395 ns | 22.5 µs | ~2,910 MB/s |
+| C++ microhash-ng | 30 ns | 584 ns | 38.4 µs | ~1,710 MB/s |
+| Ruby native ext — original | 65 ns | 699 ns | 35.7 µs | ~1,840 MB/s |
+| Ruby native ext — microhash-ng | 76 ns | 743 ns | 37.8 µs | ~1,730 MB/s |
+| C# original (.NET, Release) | ~280 ns | ~5.2 µs | ~50 µs | ~1,310 MB/s |
+| `Digest::SHA256` (OpenSSL) | 513 ns | 3.5 µs | 186 µs | ~350 MB/s |
+| Ruby pure — original | 1.2 µs | 18.9 µs | 1.19 ms | ~55 MB/s |
+| Ruby pure — microhash-ng | 3.0 µs | 61.5 µs | 3.42 ms | ~19 MB/s |
 
-microhash is not cryptographic (see limitations below), so this is not an apples-to-apples comparison with SHA-256 — it is only meant to show where each implementation sits when a fast non-cryptographic digest is sufficient.
+The pure-Ruby paths pad the message once and use `String#unpack('V*')` for word assembly (which runs in C) with the rotates inlined in the mixing loop — about 4.5× faster than the original byte-by-byte implementation. microhash is not cryptographic (see limitations below), so this is not an apples-to-apples comparison with SHA-256 — it is only meant to show where each implementation sits when a fast non-cryptographic digest is sufficient.
+
+### Case study: fingerprinting a Rails view tree
+
+End-to-end feasibility test for file-change-detection tooling (e.g. a WCAG audit gem that fingerprints every view): 594 ERB files, 2.3 MB total, read + hashed per file, CRuby 3.1.3, warm page cache. Wall time for the full tree:
+
+| Pipeline | Full tree | Hash cost over IO floor |
+|---|---|---|
+| Read only (IO floor) | 4.1 ms | — |
+| Read + microhash-ng **native ext** | 5.2 ms | ~1.1 ms |
+| Read + `SHA256[0,16]` (truncated) | 12.8 ms | ~8.7 ms |
+| Read + `Digest::SHA256` | 14.2 ms | ~10.1 ms |
+| Read + microhash-ng **pure Ruby** | 136.5 ms | ~132 ms |
+
+Read honestly: with the native extension, microhash-ng is the fastest option (~2.7× faster end-to-end than SHA-256) and produces 16-char digests; as a pure-Ruby drop-in it is ~10× slower than OpenSSL-backed SHA-256, though 136 ms per full tree is still imperceptible in CI. If a dependency-free install matters more than digest length semantics, truncated SHA-256 remains a perfectly good choice — every option here is far from being a bottleneck at this scale.
 
 ---
 

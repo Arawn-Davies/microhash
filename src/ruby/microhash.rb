@@ -30,42 +30,42 @@ module MicroHash
   end
 
   # Pure-Ruby reference path; used when the native extension is absent.
+  #
+  # Performance notes: the whole padded message is built once as a binary
+  # String and split into little-endian words by String#unpack ('V*'), which
+  # runs in C. The mixing loop inlines the rotates instead of calling rol32
+  # per word. Output is identical to the native extension and the C++/C#
+  # implementations.
   def pure_compute_hash(data)
-    bytes = data.is_a?(String) ? data.bytes : data
-    length = bytes.length
+    str = data.is_a?(String) ? data : data.pack('C*')
+    length = str.bytesize
+
+    padded_len = ((length + 5 + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE
+    padded = str.b << 0x80.chr << ("\0" * (padded_len - length - 5)) << [length].pack('N')
+    words = padded.unpack('V*')
 
     s0 = 0x243F6A88
     s1 = 0x85A308D3
 
-    padded_len = ((length + 5 + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE
-
-    (0...padded_len).step(BLOCK_SIZE) do |offset|
-      block = Array.new(BLOCK_SIZE) do |i|
-        index = offset + i
-        if index < length
-          bytes[index]
-        elsif index == length
-          0x80
-        elsif index >= padded_len - 4
-          (length >> (8 * (BLOCK_SIZE - 1 - i))) & 0xFF
-        else
-          0x00
-        end
+    # Original algorithm: only the first four words (bytes 0-15) of each
+    # eight-word block are mixed.
+    i = 0
+    n = words.length
+    while i < n
+      j = i
+      last = i + 4
+      while j < last
+        w = words[j]
+        t = s0 ^ w
+        s0 = ((((t << 5) | (t >> 27)) & MASK32) + s1) & MASK32
+        t = (s1 + w) & MASK32
+        s1 = (((t << 11) | (t >> 21)) & MASK32) ^ s0
+        j += 1
       end
-
-      4.times do |i|
-        base = i * 4
-        word = block[base] |
-               (block[base + 1] << 8) |
-               (block[base + 2] << 16) |
-               (block[base + 3] << 24)
-
-        s0 = (rol32(s0 ^ word, 5) + s1) & MASK32
-        s1 = rol32((s1 + word) & MASK32, 11) ^ s0
-      end
+      i += 8
     end
 
-    final = s0 ^ rol32(s1, 3)
+    final = s0 ^ (((s1 << 3) | (s1 >> 29)) & MASK32)
     (final << 32) | s1
   end
 

@@ -261,7 +261,7 @@ make
 
 This produces `microhash_ext.so` (or `.bundle` on macOS) next to the source. `microhash.rb` auto-detects it at require time: `MicroHash::NATIVE` reports `true` and `compute_hash`/`hexdigest` transparently delegate to C. Without the compiled extension the pure-Ruby path is used — output is identical either way. Run `make distclean` to remove build artifacts (they are gitignored).
 
-Indicative throughput on Ruby 3.1.3 (x86-64): pure Ruby hashes 64 KB in ~4.5 ms; the native extension does it in ~38 µs (~1.7 GB/s), roughly 5× faster than `Digest::SHA256` on the same input.
+Indicative throughput on Ruby 3.1.3 (x86-64): pure Ruby hashes 64 KB in ~1.2 ms (~55 MB/s — the padded message is unpacked to words in C via `String#unpack('V*')` and the rotates are inlined); the native extension does it in ~36 µs (~1.8 GB/s), roughly 5× faster than `Digest::SHA256` on the same input. See the README's benchmark section for the full original/ng comparison table.
 
 ### Running the Ruby tests (RSpec)
 
@@ -275,12 +275,12 @@ Run the suite from the repository root:
 rspec tests/ruby/microhash_spec.rb
 ```
 
-Expected output:
+Expected output without the native extension (the native-vs-pure agreement example is reported as pending):
 ```
-20 examples, 0 failures
+21 examples, 0 failures, 1 pending
 ```
 
-With the native extension compiled, an additional native-vs-pure agreement example runs (201 input lengths):
+With the native extension compiled, all examples run:
 ```
 21 examples, 0 failures
 ```
@@ -365,7 +365,7 @@ The ng suites include regression tests for the two defects fixed relative to the
 | **Collision resistance** — 100K sequential inputs, 0 collisions | ✅ | ✅ | — |
 | **Avalanche effect** — avg bits changed per single-bit flip, 20–44/64 | ✅ | ✅ | — |
 | **Bit distribution** — each output bit 44%–56% frequency over 65K inputs | ✅ | ✅ | — |
-| **Total assertions** | **294** | **38** | **20–21 examples** |
+| **Total assertions** | **294** | **38** | **21 examples** |
 
 > The C++ runner counts each `ASSERT_EQ`/`ASSERT_NE` call individually (including the 256-byte loop), while xUnit counts parameterised theory cases as separate test cases.
 
